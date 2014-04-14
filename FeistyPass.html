@@ -1,0 +1,202 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>FeistyPass - The Feistel Network Ciphyr Manager</title>
+
+    <style type="text/css">
+textarea {
+    width: 45%;
+    height: 3in;}
+    </style>
+
+	<!--<link rel="stylesheet" href="jquery.mobile-1.4.2.min.css">
+	<script src="jquery.js"></script>
+    <script src="jquery.mobile-1.4.2.js"></script>-->
+    <script type="text/javascript" src="SHA-512.js"></script>
+    <script type="text/javascript">
+var list = [];
+
+// generate a set for password entries
+/****
+ * name : name of set
+ * notes : whatever information that someone wants to keep with this set
+ * key : key used for encrypting and decrypting entries
+ * hashedPassword : the password to decrypt the password entries in the set
+ * protocal : what method to use for encryption/decryption
+ ****/
+function Set (name, notes, key, hashedPassword, protocal, encryptNotes) {
+    var set = {};
+    set.name = name;
+    if (encryptNotes == false || encryptNotes == null) {
+        set.notes = notes;
+    } else {
+        // TODO: encrypt notes
+        set.notes = notes;
+    }
+    set.key = key;
+    set.hashedPassword = hashedPassword;
+    set.protocal = protocal;
+    set.encryptNotes = encryptNotes
+    set.encrypted = true;
+    set.list = [];
+
+    return set;
+}
+
+// generate a password entry
+/****
+ * name : name of password entry
+ * notes : whatever information that someone wants to keep with this password
+ * key : key used for encrypting and decrypting actual password
+ * hashedPassword : the password to decrypt the password entries in the set
+ * protocal : what method to use for encryption/decryption
+ ****/
+function Entry (name, notes, key, hashedPassword, protocal, encryptNotes) {
+    var entry = {};
+    entry.name = name;
+    if (encryptNotes == false || encryptNotes == null) {
+        entry.notes = notes;
+    } else {
+        // TODO: encrypt notes
+        entry.notes = notes;
+    }
+    entry.key = key;
+    entry.hashedPassword = hashedPassword;
+    entry.protocal = protocal;
+    entry.encryptNotes = encryptNotes;
+    entry.encrypted = true;
+
+    return set;
+
+}
+
+// takes a JSON string and builds the sets of passwords
+function fromStorageString(json) {
+    list = JSON.parse(localStorage.list);
+}
+
+// takes the sets of passwords and converts it into a JSON string
+function toStorageString() {
+    for (var i=0;i<list.length;i++) {
+        encrypt(list[i]);
+    }
+    localStorage.list = JSON.stringify(list);
+}
+
+// encrypt a given Set or Entry
+function encrypt (target) {
+}
+
+// decrypt a given Set or Entry
+function decrypt (target) {
+}
+
+
+function hex_to_num(hex) {
+    var num = [];
+    for (var i=0;i<hex.length;i+=2) {
+        num.push(parseInt(hex.substr(i,2), 16));
+    }
+    return num;
+}
+
+function num_to_hex(num) {
+    var ch = ["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"]
+    var hex = "";
+    for (var i=0;i<num.length;i++) {
+        var snd = num[i] % 16; 
+        hex += ch[(num[i] - snd) / 16] + ch[snd];
+    }
+    return hex;
+}
+
+if ("00FF0552" != num_to_hex(hex_to_num("00FF0552")))
+    alert("error in num_to_hex and hex_to_num: " + hex_to_num("00FF0552") + ", " + num_to_hex(hex_to_num("00FF0552")));
+
+
+function str_to_num(str) {
+    var num = [];
+    for (var i=0;i<str.length;i++) {
+        num.push(str.charCodeAt(i));
+    }
+    return num;
+}
+
+function num_to_str(num) {
+    var str = "";
+    for (var i=0;i<num.length;i++) {
+        str += String.fromCharCode(num[i]);
+    }
+    return str;
+}
+
+if ("test string" != num_to_str(str_to_num("test string")))
+    alert("error in num_to_hex and hex_to_num: " + str_to_num("test string") + ", " + num_to_str(str_to_num("test string")));
+
+function str_to_hex(str) {
+    return num_to_hex(str_to_num(str));
+}
+
+function hex_to_str(hex) {
+    return num_to_str(hex_to_num(hex));
+}
+
+if ("test string" != hex_to_str(str_to_hex("test string")))
+    alert("error in num_to_hex and hex_to_num: " + str_to_hex("test string") + ", " + hex_to_str(str_to_hex("test string")));
+
+
+// as number arrays
+function feistel(left, right, key, func) {
+    var ret = []
+    var pad = func(key, right);
+    for (var i=0; i < left.length && i < pad.length; i++) {
+        ret.push(left[i] ^ pad[i]); 
+    }
+    return ret;
+}
+
+
+function feistEn(str) {
+    var key = str_to_num("test");
+    var blockSize = 64;
+    var func = function(key, val) {
+        return hex_to_num(SHA512(num_to_str(key) + num_to_str(val)));
+    }
+    if (str.length % blockSize != 0)
+        str += ("|                                                                   ").substr(0, blockSize - (str.length % blockSize));
+    var ret = "";
+    for (var i=0;i<str.length/blockSize;i++) {
+        var left = str_to_num(str.substr(i*blockSize, blockSize/2));
+        var right = str_to_num(str.substr((i+0.5)*blockSize, blockSize/2));
+        ret += num_to_str(right) + num_to_str(feistel(left, right, key, func));
+    }
+    return ret;
+}
+
+function feistDe(str) {
+    var key = str_to_num("test");
+    var blockSize = 64;
+    var func = function(key, val) {
+        return hex_to_num(SHA512(num_to_str(key) + num_to_str(val)));
+    }
+    if (str.length % blockSize != 0)
+        str += ("|                                                                   ").substr(0, blockSize - (str.length % blockSize));
+    var ret = "";
+    for (var i=0;i<str.length/blockSize;i++) {
+        var right = str_to_num(str.substr(i*blockSize, blockSize/2));
+        var left = str_to_num(str.substr((i+0.5)*blockSize, blockSize/2));
+        ret += num_to_str(feistel(left, right, key, func)) + num_to_str(right);
+    }
+    return ret.replace(/\| *$/,"");
+}
+
+    </script>
+</head>
+<body>
+    <h1>Feisty Pass</h1>
+    <textarea id="en"></textarea>
+    <textarea id="de"></textarea><br />
+    <button onclick="document.getElementById('de').value = feistEn(document.getElementById('en').value)">Encrytion</button>
+    <button onclick="document.getElementById('en').value = feistDe(document.getElementById('de').value)">Decrytion</button>
+</body>
+</html>
