@@ -43,11 +43,13 @@ Feistel.prototype = {
     encrypt : function (str) {
         str = this.pad(str);
         for (var j=0; j<this.rounds; j++) {
+            var ret = "";
             for (var i=0; i<str.length/this.blockSize; i++) {
                 var left = str.substr(i*this.blockSize, this.blockSize/2);
                 var right= str.substr((i+0.5)*this.blockSize, this.blockSize/2);
-                str = right + this.feistel(left, right);
+                ret += right + this.feistel(left, right);
             }
+            str = ret;
         }
         return str;
     },
@@ -55,11 +57,13 @@ Feistel.prototype = {
     // undo encrypt by carefully reversing what was done by encrypt
     decrypt : function (str) {
         for (var j=0; j<this.rounds; j++) {
+            var ret = "";
             for (var i=0; i<str.length/this.blockSize; i++) {
                 var right= str.substr(i*this.blockSize, this.blockSize/2);
                 var left = str.substr((i+0.5)*this.blockSize, this.blockSize/2);
-                str = this.feistel(left, right) + right;
+                ret += this.feistel(left, right) + right;
             }
+            str = ret;
         }
         return this.unpad(str);
     },
