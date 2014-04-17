@@ -78,4 +78,14 @@ var structure = {
     // decrypt a given Set or Entry
     decrypt : function (target) {
     },
+
+    hex2str : function (hex) {
+        var str = "";
+        return str;
+    },
+
+    str2hex : function (str) {
+        var hex = "";
+        return hex;
+    },
 }
