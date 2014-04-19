@@ -1,14 +1,8 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>FeistyPass - The Feistel Network Ciphyr Manager</title>
-
-    <style type="text/css">
-textarea {
-    width: 45%;
-    height: 3in;}
-    </style>
-
+    <title>FeistyPass - Structure Test Page</title>
+    <style type="text/css"></style>
 	<link rel="stylesheet" href="styles/jquery.mobile-1.4.2.min.css">
 	<script type="text/javascript" src="scripts/jquery.js"></script>
     <script type="text/javascript" src="scripts/jquery.mobile-1.4.2.js"></script>
@@ -16,51 +10,41 @@ textarea {
     <script type="text/javascript" src="scripts/feistel.js"></script>
     <script type="text/javascript" src="scripts/structure.js"></script>
     <script type="text/javascript">
+function newEntry () {
+    structure.master.list.push(structure.Entry(
+        "Test Set",
+        "this is a test set.",
+        SHA512("test"),
+        "feistel 10",
+        false
+    ));
+
+    structure.display.entry(structure.master);
+}
     </script>
 </head>
-<body>
-    <h1>Feisty Pass</h1>
-    <div id="example">
-        <ul>
-            <li>
-                <h3>Name</h3>
-                <div>Notes, anything you want to say about the set, EI "this set contains all passwords for media website".</div>
-                <ul>
-                    <li>
-                        <h3>Name</h3>
-                        <div>Notes, anything you want to say about the entry, EI "Username: nobody, email: abrf@abc.com".</div>
-                        <input value="MySuperSecretPassWord">
-                    </li>
-                    <li>
-                        <h3>Name</h3>
-                        <div>Notes, anything you want to say about the entry, EI "Username: nobody, email: abrf@abc.com".</div>
-                        <div>[Encrypted]</div>
-                    </li>
-                    <li>
-                        <h3>Name</h3>
-                        <div>[Encrypted]</div>
-                    </li>
-                    <li>0A9B3CE39A9F4F41F945...</li>
-                    <li>
-                        <h3>Name</h3>
-                        <div>[Encrypted]</div>
-                        <ul>
-                            <li>
-                                <h3>Name</h3>
-                                <div>[Encrypted]</div>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                <h3>Name</h3>
-                <div>Notes for encrypted sets can also be encrypted</div>
-                <div>[Encrypted]</div>
-            </li>
-        </ul>
-    </div>
-    <div id="list">
+<body onload="newEntry();">
+    <ul data-role="listview" data-inset="true" id="list">
+        <li data-role="list-divider" id="title">
+            <span>Master List</span>
+            <span class="ui-li-count"></span>
+        </li>
+        <li>
+            <p>Page Loading....</p>
+            <button data-inline="true" class="ui-li-count"></button>
+        </li>
+    </ul>
+    <div data-role="footer" data-position="fixed">
+        <div data-role="navbar">
+            <ul>
+                <li><button onclick="">Edit</button></li>
+                <li><button onclick="newEntry()">New Entry</button></li>
+            </ul>
+            <ul>
+                <li><button onclick="">Delete</button></li>
+                <li><a href="#">Help</a></li>
+            </ul>
+        </div>
     </div>
 </body>
 </html>
