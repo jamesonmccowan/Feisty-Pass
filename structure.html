@@ -2,13 +2,7 @@
 <head>
     <meta charset="utf-8" />
     <title>FeistyPass - Structure Test Page</title>
-
-    <style type="text/css">
-textarea {
-    width: 45%;
-    height: 3in;}
-    </style>
-
+    <style type="text/css"></style>
 	<link rel="stylesheet" href="styles/jquery.mobile-1.4.2.min.css">
 	<script type="text/javascript" src="scripts/jquery.js"></script>
     <script type="text/javascript" src="scripts/jquery.mobile-1.4.2.js"></script>
@@ -16,42 +10,8 @@ textarea {
     <script type="text/javascript" src="scripts/feistel.js"></script>
     <script type="text/javascript" src="scripts/structure.js"></script>
     <script type="text/javascript">
-//note: make the delete option appear in the notes feild and to the right
-function refresh () {
-    $("#list li").remove();
-    $("#list").append("<li class=\"ui-li-divider ui-bar-inherit ui-li-has-count ui-first-child\" role=\"heading\" data-role=\"list-divider\">Master List <span class=\"ui-li-count ui-body-inherit\">Decrypted</span></li>");
-
-    /*  <li>
-            <a href="format.html">
-                <h2>PayPal</h2>
-                <p>AF9B5EC03F943BC...</p>
-                <p class="ui-li-aside"><strong>[Encrypted]</strong></p>
-            </a>
-        </li>*/
-    for (var i=0;i<structure.list.length;i++) {
-        var l = structure.list[i];
-        var li = "            <li>\n"
-+"            <a class=\"ui-btn ui-btn-icon-right ui-icon-carat-r\" href=\"structure.html\">\n"
-+"                <h2>" + l.name +"</h2>\n"
-+"                <p>" + l.notes+ "</p>\n"
-+"                <p class=\"ui-li-aside\"><strong>[";
-
-        if (l.encrypted) {
-            li += "Encrypted";
-        } else {
-            li += "Decrypted";
-        }
-
-        li += "]</strong></p>\n"
-+"            </a>\n"
-+"        </li>\n";
-
-        $("#list").append(li);
-    }
-}
-
-function newSet () {
-    structure.list.push(structure.Set(
+function newEntry () {
+    structure.master.list.push(structure.Entry(
         "Test Set",
         "this is a test set.",
         SHA512("test"),
@@ -59,41 +19,29 @@ function newSet () {
         false
     ));
 
-    refresh();
+    structure.display.entry(structure.master);
 }
     </script>
 </head>
-<body>
-    <!--<ul data-role="listview" data-inset="true">
-        <li data-role="list-divider">Master List <span class="ui-li-count">Decrypted</span></li>
-        <li>
-            Notes on Master List
-        </li>
-        <li>
-            <a href="format.html">
-                <h2>PayPal</h2>
-                <p>AF9B5EC03F943BC...</p>
-                <p class="ui-li-aside"><strong>[Encrypted]</strong></p>
-            </a>
-        </li>
-        <li>
-            <a href="format.html">
-                <h2>US Bank</h2>
-                <p>AF9B5EC03F943BC...</p>
-                <p class="ui-li-aside"><strong>[Encrypted]</strong></p>
-            </a>
-        </li>
-    </ul>-->
+<body onload="newEntry();">
     <ul data-role="listview" data-inset="true" id="list">
-        <li data-role="list-divider" id="title">Master List<span class="ui-li-count">Decrypted</span></li>
+        <li data-role="list-divider" id="title">
+            <span>Master List</span>
+            <span class="ui-li-count"></span>
+        </li>
+        <li>
+            <p>Page Loading....</p>
+            <button data-inline="true" class="ui-li-count"></button>
+        </li>
     </ul>
-    
     <div data-role="footer" data-position="fixed">
         <div data-role="navbar">
             <ul>
-                <li><button>Decrypt</button></li>
-                <li><button>New Entry</button></li>
-                <li><button onclick="newSet();">New Set</button></li>
+                <li><button onclick="">Edit</button></li>
+                <li><button onclick="newEntry()">New Entry</button></li>
+            </ul>
+            <ul>
+                <li><button onclick="">Delete</button></li>
                 <li><a href="#">Help</a></li>
             </ul>
         </div>
