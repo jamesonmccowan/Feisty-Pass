@@ -61,8 +61,6 @@ var structure = {
     decrypt : function (target) {
     },
 
-    //            ret += String.fromCharCode(left.charCodeAt(i) ^ f.charCodeAt(i));
-    //            parseInt(bin_array[i], 2)
     hex2str : function (hex) {
         var str = "";
         for (var i=0;i<hex.length;i+=2) {
