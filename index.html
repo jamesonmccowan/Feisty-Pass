@@ -91,7 +91,13 @@ $(document).on("pageinit", starter);
                 <td><input value="w4f53" /></td>
             </tr><tr>
                 <th colspan="2">
-                    <a href="#popupChangePassword" data-rel="popup" data-position-to="window" data-transition="pop" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b">Change Password</a>
+                    <input name="edit-pass" id="edit-pass" type="password" placeholder="Password" value="">
+                    <label for="edit-pass" class="ui-hidden-accessible">Password</label>
+                </th>
+            </tr><tr>
+                <th colspan="2">
+                    <input name="edit-confirm" id="new-confirm" type="password" placeholder="Confirm Password" value="">
+                    <label for="edit-confirm" class="ui-hidden-accessible">Confirm Password</label>
                 </th>
             </tr><tr>
                 <th>Encryption</th>
@@ -101,7 +107,7 @@ $(document).on("pageinit", starter);
                         <option>Feistel 10</option>
                     </select>
                 </td>
-            </tr></table><br />
+            </tr></table>
             <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back">Cancel</a>
             <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow">Save</a>
         </div>
@@ -148,7 +154,7 @@ $(document).on("pageinit", starter);
                         <option>Feistel 10</option>
                     </select>
                 </td>
-            </tr></table><br />
+            </tr></table>
             <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back">Cancel</a>
             <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow">Create</a>
         </div>

@@ -1,0 +1,88 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>FeistyPass - Structure</title>
+    <style type="text/css">
+table, td, th   {border: 1px solid black;}
+
+.form   {position: relative;
+    float: left;}
+
+#list   {padding-left: 3.3in;}
+    </style>
+    <script type="text/javascript" src="scripts/SHA-512.js"></script>
+    <script type="text/javascript" src="scripts/feistel.js"></script>
+    <script type="text/javascript" src="scripts/structure.js"></script>
+    <script type="text/javascript">
+function newEntry () {
+    structure.master.list.push(structure.Entry(
+        "Test Set",
+        "this is a test set.",
+        SHA512("test"),
+        "feistel 10",
+        false
+    ));
+
+    //structure.display.entry(structure.master);
+}
+newEntry();
+
+function starter() {
+    structure.display.entry(structure.master);
+}
+    </script>
+</head>
+<body>
+    <h1>Structure Test</h1>
+    <b>To Do:</b>
+    <ul>
+        <li>display list as lists and sublists</li>
+        <li>Restructure Storage - we left off functions from objects to simplify storage, that was a mistake. make the prototype object have all the functions needed and make the storage function more complicated when we actually start using it</li>
+        <li>create sub-entry</li>
+        <li>edit entry</li>
+        <li>navigation</li>
+        <li>delete entry</li>
+    </ul>
+
+    <div class="form">
+        <table>
+            <tr>
+                <th>Name</th>
+                <td><input type="text" id="f_name" /></td>
+            </tr><tr>
+                <th>Notes</th>
+                <td><textarea id="f_notes"></textarea></td>
+            </tr><tr>
+                <th>Key</th>
+                <td><input type="text" id="f_key" /></td>
+            </tr><tr>
+                <th>Hashed Password</th>
+                <td><input type="text" id="f_hp" /></td>
+            </tr><tr>
+                <th>Protocal</th>
+                <td><input type="text" id="f_p" /></td>
+            </tr><tr>
+                <th>Encrypt Notes</th>
+                <td><input type="checkbox" id="f_en" /></td>
+            </tr><tr>
+                <td colspan="2">
+                    <button>Edit</button>
+                    <button>New</button>
+                    <button>Delete</button>
+                    <button>Clear</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="list">
+        <ul>
+            <li>Master Entry
+                <ul>
+                    <li>i</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</body>
+</html>
