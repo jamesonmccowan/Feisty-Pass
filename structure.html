@@ -5,46 +5,116 @@
     <style type="text/css">
 table, td, th   {border: 1px solid black;}
 
-.form   {position: relative;
+#form   {position: relative;
     float: left;}
 
 #list   {padding-left: 3.3in;}
     </style>
     <script type="text/javascript" src="scripts/SHA-512.js"></script>
     <script type="text/javascript" src="scripts/feistel.js"></script>
-    <script type="text/javascript" src="scripts/structure.js"></script>
+    <script type="text/javascript" src="scripts/s2.js"></script>
     <script type="text/javascript">
 function newEntry () {
-    structure.master.list.push(structure.Entry(
+    structure.master.add(new Entry(
         "Test Set",
         "this is a test set.",
+        "key",
         SHA512("test"),
         "feistel 10",
-        false
+        true
     ));
 
     //structure.display.entry(structure.master);
 }
 newEntry();
 
-function starter() {
-    structure.display.entry(structure.master);
+function display () {
+    function entry (e) {
+        var li = document.createElement("li");
+        li.innerHTML = e.name;
+        li.v = e;
+        li.addEventListener("click", getEntry, false);
+
+        if (0<e.list.length) {
+            var ul = document.createElement("ul");
+            for (var i=0;i<e.list.length;i++) {
+                ul.appendChild(entry(e.list[i]));
+            }
+            li.appendChild(ul);
+        }
+        return li;
+    }
+    document.getElementById("list").innerHTML = "<ul></ul>";
+    document.getElementById("list").getElementsByTagName("ul")[0].appendChild(entry(structure.master));
+    //structure.master.display();
 }
+
+function getEntry (event) {
+    var e = this.v;
+    document.getElementById("form").v = e;
+    document.getElementById("f_name").value = e.name;
+    document.getElementById("f_notes").value = e.notes;
+    document.getElementById("f_key").value = e.key;
+    document.getElementById("f_hp").value = e.hashedPassword;
+    document.getElementById("f_p").value = e.protocal;
+    document.getElementById("f_en").checked = e.encrypted;
+    event.stopPropagation();
+}
+
+function editEntry () {
+    var e = document.getElementById("form").v;
+    e.name = document.getElementById("f_name").value;
+    e.notes = document.getElementById("f_notes").value;
+    e.key = document.getElementById("f_key").value;
+    e.hashedPassword = document.getElementById("f_hp").value;
+    e.protocal = document.getElementById("f_p").value;
+    e.encrypted = document.getElementById("f_en").checked;
+    display();
+}
+
+function createEntry () {
+    document.getElementById("form").v.add(new Entry(
+        document.getElementById("f_name").value,
+        document.getElementById("f_notes").value,
+        document.getElementById("f_key").value,
+        document.getElementById("f_hp").value,
+        document.getElementById("f_p").value,
+        document.getElementById("f_en").checked
+    ));
+    display();
+}
+
+function deleteEntry () {
+    var entry = document.getElementById("form").v
+    entry["parent"].remove(entry.index);
+    display();
+}
+
+function clearForm () {
+    document.getElementById("form").v = null;
+    document.getElementById("f_name").value = "";
+    document.getElementById("f_notes").value = "";
+    document.getElementById("f_key").value = "";
+    document.getElementById("f_hp").value = "";
+    document.getElementById("f_p").value = "";
+    document.getElementById("f_en").checked = false;
+}
+
     </script>
 </head>
-<body>
+<body onload="display()">
     <h1>Structure Test</h1>
-    <b>To Do:</b>
+<!--    <b>To Do:</b>
     <ul>
         <li>display list as lists and sublists</li>
-        <li>Restructure Storage - we left off functions from objects to simplify storage, that was a mistake. make the prototype object have all the functions needed and make the storage function more complicated when we actually start using it</li>
+<li>Restructure Storage - we left off functions from objects to simplify storage, that was a mistake. make the prototype object have all the functions needed and make the storage function more complicated when we actually start using it</li>
         <li>create sub-entry</li>
         <li>edit entry</li>
         <li>navigation</li>
         <li>delete entry</li>
-    </ul>
+    </ul>-->
 
-    <div class="form">
+    <div id="form">
         <table>
             <tr>
                 <th>Name</th>
@@ -66,10 +136,10 @@ function starter() {
                 <td><input type="checkbox" id="f_en" /></td>
             </tr><tr>
                 <td colspan="2">
-                    <button>Edit</button>
-                    <button>New</button>
-                    <button>Delete</button>
-                    <button>Clear</button>
+                    <button onclick="editEntry()">Edit</button>
+                    <button onclick="createEntry()">New</button>
+                    <button onclick="deleteEntry()">Delete</button>
+                    <button onclick="clearForm()">Clear</button>
                 </td>
             </tr>
         </table>
