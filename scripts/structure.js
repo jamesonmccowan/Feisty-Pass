@@ -1,66 +1,155 @@
 // Variable that will hold the app's structure in memory as well as manage
 // the transition of states for that structure.
-var structure = {
-    // stores the first sets, where each set can store sets and password entries
-    master : {
-        name : "Master List",
-        notes : "Master list of passwords",
-        key : "w4f53",
-        hashedPassword : "",
-        protocal : "",
-        encryptNotes : false,
-        encrypted : false,
-        list : []
-    },
-    
-    // generate a set for password entries
-    /****
-     * name : name of set
-     * notes : whatever information that someone wants to keep with this set
-     * key : key used for encrypting and decrypting entries
-     * hashedPassword : the password to decrypt the password entries in the set
-     * protocal : what method to use for encryption/decryption
-     ****/
-    Entry : function (name, notes, key, hashedPassword, protocal, encryptNotes) {
-        var entry = {};
-        entry.name = name;
+// generate a set for password entries
+/****
+ * name : name of set
+ * notes : whatever information that someone wants to keep with this set
+ * key : key used for encrypting and decrypting entries
+ * hashedPassword : the password to decrypt the password entries in the set
+ * protocal : what method to use for encryption/decryption
+ ****/
+var Entry = function (name, notes, key, hashedPassword, protocal, encryptNotes) {
+    if (typeof name == "string") {
+        this.name = name;
+
         if (encryptNotes == false || encryptNotes == null) {
-            entry.notes = notes;
+            this.encryptNotes = false;
+            this.notes = notes;
         } else {
+            this.encryptNotes = true;
             // TODO: encrypt notes
-            entry.notes = notes;
+            this.notes = notes;
         }
-        entry.key = key;
-        entry.hashedPassword = hashedPassword;
-        entry.protocal = protocal;
-        entry.encryptNotes = encryptNotes
-        entry.encrypted = true;
-        entry.list = [];
-        
-        return entry;
-    },
 
-    // takes a JSON string and builds the sets of passwords
-    fromStorage : function (json) {
-        this.list = JSON.parse(localStorage.list);
-    },
-
-    // takes the sets of passwords and converts it into a JSON string
-    toStorage : function () {
-        for (var i=0;i<this.list.length;i++) {
-            encrypt(this.list[i]);
+        if (typeof key == "string") {
+            this.key = key;
+        } else {
+            this.key = "aRandomString";
         }
-        localStorage.list = JSON.stringify(this.list);
+
+        if (typeof hashedPassword == "string") {
+            this.hashedPassword = hashedPassword;
+        }
+
+        if (typeof protocal == "string") {
+            this.protocal = protocal;
+        } else {
+            this.protocal = "Default";
+        }
+
+        this.encrypted = true;
+        this.list = [];
+    } else if (typeof name == "object") {
+        for (i in name) {
+            this[i] = name[i];
+        }
+    }
+}
+
+Entry.prototype = {
+    // add an entry
+    add : function (entry) {
+        entry["parent"] = this;
+        entry.index = this.list.length;
+        this.list.push(entry);
     },
 
-    // encrypt a given Set or Entry down recursively
-    encrypt : function (target) {
+    // remove an entry
+    remove : function (index) {
+        this.list.splice(index, 1);
     },
 
-    // decrypt a given Set or Entry
-    decrypt : function (target) {
+    // encrypt this Entry and it's decendants down recursively
+    encrypt : function () {
+        if (!this.encrypted) {
+            for (var i=0;i<this.list.length;i++) {
+                this.list[i].encrypt();
+                // TODO: actual encryption
+            }
+            if (this.encryptNotes) {
+                // TODO: actual encryption
+            }
+            this.encrypted = true;
+        }
     },
 
+    // decrypt this Entry
+    decrypt : function () {
+        if (this.encrypted) {
+            for (var i=0;i<this.list.length;i++) {
+                // TODO: actual decryption
+            }
+            if (this.encryptNotes) {
+                // TODO: actual decryption
+            }
+            this.encrypted = false;
+        }
+    },
+
+    // displays this entry
+    display : function () {
+        structure.current = this;
+        if (structure.current == structure.master) {
+            $(".hideOnMaster a").addClass("ui-state-disabled");
+        } else {
+            $(".hideOnMaster a").removeClass("ui-state-disabled");
+        }
+
+
+        /*<a href="format.html">
+            <h2>PayPal</h2>
+            <p>AF9B5EC03F943BC...</p>
+            <p class="ui-li-aside"><strong>[Encrypted]</strong></p>
+          </a>*/
+        var stub = function (s) {
+            var li   = document.createElement("li");
+            var a    = document.createElement("a");
+            var name = document.createElement("h2");
+            var notes= document.createElement("p");
+            var state= document.createElement("p");
+            
+            a.setAttribute("class", "ui-btn ui-btn-icon-right ui-icon-carat-r");
+            a.setAttribute("href", "#");
+            a.addEventListener("click", function() {s.display();}, false);
+            
+            name.innerHTML = s.name;
+            notes.innerHTML = s.notes;
+            
+            state.setAttribute("class", "ui-li-aside");
+            state.innerHTML = s.encrypted? "Encrypted" : "Decrypted";
+            
+            li.appendChild(a);
+            a.appendChild(name);
+            a.appendChild(notes);
+            a.appendChild(state);
+            document.getElementById("list").appendChild(li);
+        }
+
+        $("#list li a:parent").remove();
+        $("#list li:first span:first").html(this.name);
+            
+        if (this.encrypted) {
+            $("#list li:first span:last").html("Encrypted");
+            $("#list li:nth-child(2) button").html("Decrypt");
+        } else {
+            $("#list li:first span:last").html("Decrypted");
+            $("#list li:nth-child(2) button").html("Encrypt");
+        }
+            
+        if (this.notes == null || this.notes.length == 0) {
+            $("#list li:nth-child(2) p").html("");
+        } else {
+            $("#list li:nth-child(2) p").html(this.notes);
+        }
+        if (typeof this.list == "object") {
+            for (var i=0;i<this.list.length;i++) {
+                stub(this.list[i]);
+            }
+        }
+    },
+}
+
+var structure = {
     hex2str : function (hex) {
         var str = "";
         for (var i=0;i<hex.length;i+=2) {
@@ -78,63 +167,16 @@ var structure = {
         }
         return hex;
     },
- 
-    display : {
-        entry : function (s) {
-            $("#list li a:parent").remove();
-            $("#list li:first span:first").html(s.name);
-            
-            if (s.encrypted) {
-                $("#list li:first span:last").html("Encrypted");
-                $("#list li:nth-child(2) button").html("Decrypt");
-            } else {
-                $("#list li:first span:last").html("Decrypted");
-                $("#list li:nth-child(2) button").html("Encrypt");
-            }
-            
-            if (s.notes.length == 0) {
-                $("#list li:nth-child(2) p").html("");
-            } else {
-                $("#list li:nth-child(2) p").html(s.notes);
-            }
-            if (typeof s.list == "object") {
-                for (var i=0;i<s.list.length;i++) {
-                    this.stub(s.list[i]);
-                }
-            }
-        },
 
-        /*<a href="format.html">
-            <h2>PayPal</h2>
-            <p>AF9B5EC03F943BC...</p>
-            <p class="ui-li-aside"><strong>[Encrypted]</strong></p>
-          </a>*/
-        stub : function (s) {
-            var li   = document.createElement("li");
-            var a    = document.createElement("a");
-            var name = document.createElement("h2");
-            var notes= document.createElement("p");
-            var state= document.createElement("p");
-            
-            a.setAttribute("class", "ui-btn ui-btn-icon-right ui-icon-carat-r");
-            a.setAttribute("href", "structure.html");
-            
-            name.innerHTML = s.name;
-            notes.innerHTML = s.notes;
-            
-            state.setAttribute("class", "ui-li-aside");
-            state.innerHTML = s.encrypted? "Encrypted" : "Decrypted";
-            
-            li.appendChild(a);
-            a.appendChild(name);
-            a.appendChild(notes);
-            a.appendChild(state);
-            document.getElementById("list").appendChild(li);
-        },
-
-        editEntry : function (p) {
-        },
-    }
+    master : new Entry({
+        name : "Master List",
+        notes : "Master list of passwords",
+        key : "w4f53",
+        hashedPassword : "",
+        protocal : "",
+        encryptNotes : false,
+        encrypted : false,
+        list : []
+    }),
 }
-
-
+structure.current = structure.master;

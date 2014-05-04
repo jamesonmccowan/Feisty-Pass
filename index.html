@@ -12,28 +12,97 @@
     <script type="text/javascript" src="scripts/feistel.js"></script>
     <script type="text/javascript" src="scripts/structure.js"></script>
     <script type="text/javascript">
-function newEntry () {
-    structure.master.list.push(structure.Entry(
-        "Test Set",
-        "this is a test set.",
-        SHA512("test"),
-        "feistel 10",
-        false
-    ));
-
-    //structure.display.entry(structure.master);
-}
-newEntry();
-
-function starter() {
-    structure.display.entry(structure.master);
+// populate the edit entry form with the current entry's data
+function getCurrentEntry () {
+    document.getElementById("edit-name").value =            structure.current.name;
+    document.getElementById("edit-notes").value =           structure.current.notes;
+    document.getElementById("edit-encrypt-notes").checked = structure.current.encryptNotes;
+    document.getElementById("edit-key").value =             structure.current.key;
+    document.getElementById("edit-pass").value =            "";
+    document.getElementById("edit-confirm").value =         "";
+    document.getElementById("edit-protocal").value =        structure.current.protocal;
 }
 
-//document.addEventListener('deviceready', newEntry, false);
-$(document).on("pageinit", starter);
+// save the edit entry form's data to the current entry
+// TODO: tell the user that the changes have been saved, or say why they haven't
+function editCurrentEntry () {
+    var name =          document.getElementById("edit-name").value;
+    var notes =         document.getElementById("edit-notes").value;
+    var encryptNotes =  document.getElementById("edit-encrypt-notes").checked;
+    var key =           document.getElementById("edit-key").value;
+    var pass1 =         document.getElementById("edit-pass").value;
+    var pass2 =         document.getElementById("edit-confirm").value;
+    var protocal =      document.getElementById("edit-protocal").value;
+
+    if (name.length <= 0) {
+        return;
+    }
+    if (pass1 != pass2) {
+        return;
+    }
+
+    structure.current.name = name;
+    structure.current.notes = notes;
+    structure.current.encryptNotes = encryptNotes;
+    structure.current.key = key;
+    if (pass1.length > 0) {
+        structure.current.hashedPassword = SHA512(pass1);
+    }
+    structure.current.protocal = protocal;
+    structure.current.display();
+}
+
+// resets the new entry form for next use
+function resetNew () {
+    document.getElementById("new-name").value = "New Entry";
+    document.getElementById("new-notes").value = "";
+    document.getElementById("new-encrypt-notes").checked = false;
+    document.getElementById("new-key").value = "needBetterKeySystem";
+    document.getElementById("new-pass").value = "";
+    document.getElementById("new-confirm").value = "";
+    document.getElementById("new-protocal").value = "default";
+}
+
+// creates a new entry as a item of the current entry
+// TODO: tell the user that the has been created, or say why it hasn't
+function createEntry () {
+    var name =          document.getElementById("new-name").value;
+    var notes =         document.getElementById("new-notes").value;
+    var encryptNotes =  document.getElementById("new-encrypt-notes").checked;
+    var key =           document.getElementById("new-key").value;
+    var pass1 =         document.getElementById("new-pass").value;
+    var pass2 =         document.getElementById("new-confirm").value;
+    var protocal =      document.getElementById("new-protocal").value;
+
+    if (name.length <= 0) {
+        return;
+    }
+    if (pass1 != pass2) {
+        return;
+    }
+
+    structure.current.add(new Entry(name, notes, key, SHA512(pass1), protocal, encryptNotes));
+    structure.current.display();
+}
+
+// deletes the current entry if the current entry is not master
+// after deletion, move user to parent of deleted entry
+// TODO: state that it was deleted or say why deletion failed
+function deleteCurrentEntry () {
+    if (structure.current != structure.master) {
+        structure.current["parent"].remove(structure.current.index);
+        structure.current["parent"].display();
+    }
+}
+
+function toParent () {
+    if (typeof structure.current["parent"] != "undefined") {
+        structure.current["parent"].display();
+    }
+}
     </script>
 </head>
-<body>
+<body onload="structure.master.display()">
     <!-- Entry Display -->
     <ul data-role="listview" data-inset="true" id="list">
         <li data-role="list-divider" id="title">
@@ -51,18 +120,31 @@ $(document).on("pageinit", starter);
         <div data-role="navbar">
             <ul>
                 <li>
-                    <a href="#popupEdit" data-rel="popup" data-position-to="window" data-transition="pop" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-edit ui-btn-icon-bottom ui-btn-a">Edit</a>
+                    <a href="#popupNew" data-rel="popup" data-position-to="window" data-transition="pop" onclick="resetNew()"
+                        class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-plus ui-btn-icon-bottom ui-btn-a">New</a>
                 </li>
                 <li>
-                    <a href="#popupNew" data-rel="popup" data-position-to="window" data-transition="pop" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-plus ui-btn-icon-bottom ui-btn-a">New</a>
-
+                    <a href="#popupEdit" data-rel="popup" data-position-to="window" data-transition="pop" onclick="getCurrentEntry()"
+                        class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-edit ui-btn-icon-bottom ui-btn-a">Edit</a>
+                </li>
+                <li class="hideOnMaster">
+                    <a href="#popupDelete" data-rel="popup" data-position-to="window" data-transition="pop"
+                        class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-delete ui-btn-icon-bottom ui-btn-a">Delete</a>
                 </li>
             </ul>
             <ul>
-                <li>
-                    <a href="#popupDelete" data-rel="popup" data-position-to="window" data-transition="pop" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-delete ui-btn-icon-bottom ui-btn-a">Delete</a>
+                <li class="hideOnMaster">
+                    <a href="#list" data-rel="popup" data-position-to="window" data-transition="pop" onclick="toParent()"
+                        class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-arrow-u ui-btn-icon-bottom ui-btn-a">Parent</a>
                 </li>
-                <li><a href="help.html" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-info ui-btn-icon-bottom ui-btn-a">Help</a></li>
+                <li>
+                    <a href="move.html"
+                        class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-action ui-btn-icon-bottom ui-btn-a">Move</a>
+                </li>
+                <li>
+                    <a href="help.html"
+                        class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-info ui-btn-icon-bottom ui-btn-a">Help</a>
+                </li>
             </ul>
         </div>
     </div>
@@ -75,7 +157,7 @@ $(document).on("pageinit", starter);
         <div role="main" class="ui-content">
             <table><tr>
                 <th>Name</th>
-                <td><input value="Master List" /></td>
+                <td><input id="edit-name" value="Master List" /></td>
             </tr><tr>
                 <td colspan="2">
                     <textarea  name="edit-notes" id="edit-notes" placeholder="Notes"></textarea>
@@ -88,7 +170,7 @@ $(document).on("pageinit", starter);
                 </th>
             </tr><tr>
                 <th>Key</th>
-                <td><input value="w4f53" /></td>
+                <td><input id="edit-key" value="w4f53" /></td>
             </tr><tr>
                 <th colspan="2">
                     <input name="edit-pass" id="edit-pass" type="password" placeholder="Password" value="">
@@ -96,20 +178,20 @@ $(document).on("pageinit", starter);
                 </th>
             </tr><tr>
                 <th colspan="2">
-                    <input name="edit-confirm" id="new-confirm" type="password" placeholder="Confirm Password" value="">
+                    <input name="edit-confirm" id="edit-confirm" type="password" placeholder="Confirm Password" value="">
                     <label for="edit-confirm" class="ui-hidden-accessible">Confirm Password</label>
                 </th>
             </tr><tr>
                 <th>Encryption</th>
                 <td>
-                    <select>
+                    <select id="edit-protocal">
                         <option>Default</option>
                         <option>Feistel 10</option>
                     </select>
                 </td>
             </tr></table>
             <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back">Cancel</a>
-            <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow">Save</a>
+            <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow" onclick="editCurrentEntry()">Save</a>
         </div>
     </div>
 
@@ -122,7 +204,7 @@ $(document).on("pageinit", starter);
         <div role="main" class="ui-content">
             <table><tr>
                 <th>Name</th>
-                <td><input value="New Entry" /></td>
+                <td><input id="new-name" value="New Entry" /></td>
             </tr><tr>
                 <td colspan="2">
                     <textarea  name="new-notes" id="new-notes" placeholder="Notes"></textarea>
@@ -135,7 +217,7 @@ $(document).on("pageinit", starter);
                 </th>
             </tr><tr>
                 <th>Key</th>
-                <td><input value="w4f53" /></td>
+                <td><input id="new-key" value="w4f53" /></td>
             </tr><tr>
                 <th colspan="2">
                     <input name="new-pass" id="new-pass" type="password" placeholder="Password" value="">
@@ -149,14 +231,14 @@ $(document).on("pageinit", starter);
             </tr><tr>
                 <th>Encryption</th>
                 <td>
-                    <select>
+                    <select id="new-protocal">
                         <option>Default</option>
                         <option>Feistel 10</option>
                     </select>
                 </td>
             </tr></table>
             <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back">Cancel</a>
-            <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow">Create</a>
+            <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow" onclick="createEntry()">Create</a>
         </div>
     </div>
 
@@ -169,7 +251,7 @@ $(document).on("pageinit", starter);
             <h3 class="ui-title">Are you sure you want to delete this page?</h3>
             <p>This action cannot be undone.</p>
             <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back">Cancel</a>
-            <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow">Delete</a>
+            <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow" onclick="deleteCurrentEntry()">Delete</a>
         </div>
     </div>
 
