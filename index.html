@@ -122,15 +122,15 @@ function toParent () {
             <div data-role="navbar">
                 <ul>
                     <li>
-                        <a href="#popupNew" onclick="resetNew()"
+                        <a href="#new" onclick="resetNew()"
                             class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-plus ui-btn-icon-bottom ui-btn-a">New</a>
                     </li>
                     <li>
-                        <a href="#popupEdit" onclick="getCurrentEntry()"
+                        <a href="#edit" onclick="getCurrentEntry()"
                             class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-edit ui-btn-icon-bottom ui-btn-a">Edit</a>
                     </li>
                     <li class="hideOnMaster">
-                        <a href="#popupDelete"
+                        <a href="#delete"
                             class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-delete ui-btn-icon-bottom ui-btn-a">Delete</a>
                     </li>
                 </ul>
@@ -140,7 +140,7 @@ function toParent () {
                             class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-arrow-u ui-btn-icon-bottom ui-btn-a">Parent</a>
                     </li>
                     <li>
-                        <a href="move.html"
+                        <a href="#move"
                             class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-action ui-btn-icon-bottom ui-btn-a">Move</a>
                     </li>
                     <li>
@@ -152,68 +152,8 @@ function toParent () {
         </div>
     </div>
 
-
-    <!-- Edit Entry Dialoge -->
-    <div data-role="page" id="popupEdit">
-        <div data-role="header" data-theme="a">
-            <h1>Edit <span class="menu-title">Master List</span></h1>
-        </div>
-        <div role="main" class="ui-content">
-            <table><tr>
-                <th>Name</th>
-                <td><input id="edit-name" value="Master List" /></td>
-            </tr><tr>
-                <td colspan="2">
-                    <textarea  name="edit-notes" id="edit-notes" placeholder="Notes"></textarea>
-                    <label for="edit-notes" class="ui-hidden-accessible">Notes</label>
-                </td>
-            </tr><tr>
-                <th colspan="2">
-                    <input name="edit-encrypt-notes" id="edit-encrypt-notes" data-mini="true" type="checkbox">
-                    <label for="edit-encrypt-notes">Encrypt Notes</label>
-                </th>
-            </tr><tr>
-                <th>Key</th>
-                <td><input id="edit-key" value="w4f53" /></td>
-            </tr><tr>
-                <th colspan="2">
-                    <input name="edit-pass" id="edit-pass" type="password" placeholder="Password" value="">
-                    <label for="edit-pass" class="ui-hidden-accessible">Password</label>
-                </th>
-            </tr><tr>
-                <th colspan="2">
-                    <input name="edit-confirm" id="edit-confirm" type="password" placeholder="Confirm Password" value="">
-                    <label for="edit-confirm" class="ui-hidden-accessible">Confirm Password</label>
-                </th>
-            </tr><tr>
-                <th>Encryption</th>
-                <td>
-                    <select id="edit-protocal">
-                        <option>Default</option>
-                        <option>Feistel 10</option>
-                    </select>
-                </td>
-            </tr></table>
-        </div>
-        <div data-role="footer" data-position="fixed">
-            <div data-role="navbar">
-                <ul>
-                    <li>
-                        <a href="#" data-rel="back"
-                            class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-back ui-btn-icon-bottom ui-btn-a">Cancel</a>
-                    </li>
-                    <li>
-                        <a href="#" data-rel="back" data-transition="flow" onclick="editCurrentEntry()"
-                            class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-edit ui-btn-icon-bottom ui-btn-a">Save</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-
     <!-- Create Entry Dialoge -->
-    <div data-role="page" id="popupNew">
+    <div data-role="page" id="new">
         <div data-role="header" data-theme="a">
             <h1>Create New List</h1>
         </div>
@@ -270,9 +210,66 @@ function toParent () {
         </div>
     </div>
 
+    <!-- Edit Entry Dialoge -->
+    <div data-role="page" id="edit">
+        <div data-role="header" data-theme="a">
+            <h1>Edit <span class="menu-title">Master List</span></h1>
+        </div>
+        <div role="main" class="ui-content">
+            <table><tr>
+                <th>Name</th>
+                <td><input id="edit-name" value="Master List" /></td>
+            </tr><tr>
+                <td colspan="2">
+                    <textarea  name="edit-notes" id="edit-notes" placeholder="Notes"></textarea>
+                    <label for="edit-notes" class="ui-hidden-accessible">Notes</label>
+                </td>
+            </tr><tr>
+                <th colspan="2">
+                    <input name="edit-encrypt-notes" id="edit-encrypt-notes" data-mini="true" type="checkbox">
+                    <label for="edit-encrypt-notes">Encrypt Notes</label>
+                </th>
+            </tr><tr>
+                <th>Key</th>
+                <td><input id="edit-key" value="w4f53" /></td>
+            </tr><tr>
+                <th colspan="2">
+                    <input name="edit-pass" id="edit-pass" type="password" placeholder="Password" value="">
+                    <label for="edit-pass" class="ui-hidden-accessible">Password</label>
+                </th>
+            </tr><tr>
+                <th colspan="2">
+                    <input name="edit-confirm" id="edit-confirm" type="password" placeholder="Confirm Password" value="">
+                    <label for="edit-confirm" class="ui-hidden-accessible">Confirm Password</label>
+                </th>
+            </tr><tr>
+                <th>Encryption</th>
+                <td>
+                    <select id="edit-protocal">
+                        <option>Default</option>
+                        <option>Feistel 10</option>
+                    </select>
+                </td>
+            </tr></table>
+        </div>
+        <div data-role="footer" data-position="fixed">
+            <div data-role="navbar">
+                <ul>
+                    <li>
+                        <a href="#" data-rel="back"
+                            class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-back ui-btn-icon-bottom ui-btn-a">Cancel</a>
+                    </li>
+                    <li>
+                        <a href="#" data-rel="back" data-transition="flow" onclick="editCurrentEntry()"
+                            class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-edit ui-btn-icon-bottom ui-btn-a">Save</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
 
     <!-- Delete Entry Dialoge -->
-    <div data-role="page" id="popupDelete">
+    <div data-role="page" id="delete">
         <div data-role="header" data-theme="a">
             <h1>Delete Entry?</h1>
         </div>
@@ -295,5 +292,16 @@ function toParent () {
             </div>
         </div>
     </div>
+
+    <!-- Move Entry Dialoge -->
+    <div data-role="page" id="move">
+        <div data-role="header" data-theme="a">
+            <h1>Move Entry</h1>
+        </div>
+        <div role="main" class="ui-content">
+            <p>Coming soon.</p>
+        </div>
+    </div>
+
 </body>
 </html>
