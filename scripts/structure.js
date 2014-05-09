@@ -126,20 +126,20 @@ Entry.prototype = {
         }
 
         $("#list li a:parent").remove();
-        $("#list li:first span:first").html(this.name);
+        $("#list-title").html(this.name);
             
         if (this.encrypted) {
-            $("#list li:first span:last").html("Encrypted");
-            $("#list li:nth-child(2) button").html("Decrypt");
+            $("#encryption-status").html("Encrypted");
+            $("#list li:nth-child(1) button").html("Decrypt");
         } else {
-            $("#list li:first span:last").html("Decrypted");
-            $("#list li:nth-child(2) button").html("Encrypt");
+            $("#encryption-status").html("Decrypted");
+            $("#list li:nth-child(1) button").html("Encrypt");
         }
             
         if (this.notes == null || this.notes.length == 0) {
-            $("#list li:nth-child(2) p").html("");
+            $("#list li:nth-child(1) p").html("");
         } else {
-            $("#list li:nth-child(2) p").html(this.notes);
+            $("#list li:nth-child(1) p").html(this.notes);
         }
         if (typeof this.list == "object") {
             for (var i=0;i<this.list.length;i++) {
