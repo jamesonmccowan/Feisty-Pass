@@ -102,6 +102,15 @@ function toParent () {
         structure.current["parent"].display();
     }
 }
+
+function toggleEncrypt() {
+    if (structure.current.encrypted) {
+        structure.current.decrypt();
+    } else {
+        structure.current.encrypt();
+    }
+    structure.current.display();
+}
     </script>
 </head>
 <body onload="structure.master.display()">
@@ -113,7 +122,7 @@ function toParent () {
         <ul data-role="listview" data-inset="true" id="list" role="main" class="ui-content">
             <li>
                 <p>Page Loading....</p>
-                <button data-inline="true" class="ui-li-count"></button>
+                <button data-inline="true" class="ui-li-count" onclick="toggleEncrypt()"></button>
             </li>
         </ul>
 
@@ -302,6 +311,5 @@ function toParent () {
             <p>Coming soon.</p>
         </div>
     </div>
-
 </body>
 </html>

@@ -40,7 +40,7 @@ var Entry = function (name, notes, key, hashedPassword, protocal, encryptNotes) 
         this.encrypted = true;
         this.list = [];
     } else if (typeof name == "object") {
-        for (i in name) {
+        for (var i in name) {
             this[i] = name[i];
         }
     }
@@ -65,12 +65,15 @@ Entry.prototype = {
             for (var i=0;i<this.list.length;i++) {
                 this.list[i].encrypt();
                 // TODO: actual encryption
+                this.list[i] = structure.str2hex(this.list[i].toJSON());
             }
             if (this.encryptNotes) {
                 // TODO: actual encryption
+                this.notes = structure.str2hex(this.notes);
             }
             this.encrypted = true;
         }
+        return this.list;
     },
 
     // decrypt this Entry
@@ -78,9 +81,13 @@ Entry.prototype = {
         if (this.encrypted) {
             for (var i=0;i<this.list.length;i++) {
                 // TODO: actual decryption
+                this.list[i] = new Entry(JSON.parse(structure.hex2str(this.list[i])));
+                this.list[i]["parent"] = this;
+                this.list[i].index = i;
             }
             if (this.encryptNotes) {
                 // TODO: actual decryption
+                this.notes = structure.hex2str(this.notes);
             }
             this.encrypted = false;
         }
@@ -147,13 +154,47 @@ Entry.prototype = {
             }
         }
     },
+
+    toJSON : function () {
+        var params = ['name', 'notes', 'key', 'hashedPassword', 'protocal'];
+        var str = '{';
+
+        for (var i=0;i<params.length;i++) {
+            if (typeof this[params[i]] != 'undefined') {
+                str += '"' + params[i] + '":"' + this[params[i]] + '", ';
+            } else {
+                str += '"' + params[i] + '": null, ';
+            }
+        }
+
+        str += '"list":[';
+        if (typeof this.list != "undeined") {
+            for (var i=0;i<this.list.length;i++) {
+                if (typeof this.list[i] == "string") {
+                    str += '"' + this.list[i] + '", ';
+                } else {
+                    str += '"' + this.list[i].toJSON() + '", ';
+                }
+            }
+        }
+        str += '], ';
+
+        if (this.encryptNotes) {
+            str += '"encryptNotes":true';
+        } else {
+            str += '"encryptNotes":false';
+        }
+
+        str += '}';
+        return str;
+    }
 }
 
 var structure = {
     hex2str : function (hex) {
         var str = "";
         for (var i=0;i<hex.length;i+=2) {
-            str += String.fromCharCode(parseInt(hex.substr(i, 2)), 16);
+            str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
         }
         return str;
     },
