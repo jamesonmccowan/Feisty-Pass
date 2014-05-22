@@ -18,7 +18,7 @@ var Entry = function (name, notes, key, hashedPassword, protocal, encryptNotes) 
         } else {
             this.encryptNotes = true;
             // TODO: encrypt notes
-            this.notes = notes;
+            this.notes = structure.str2hex(notes);
         }
 
         if (typeof key == "string") {
@@ -51,7 +51,13 @@ Entry.prototype = {
     add : function (entry) {
         entry["parent"] = this;
         entry.index = this.list.length;
-        this.list.push(entry);
+
+        if (this.encrypted) {
+            var en = structure.encryption(this.protocal);
+            this.list.push(structure.str2hex(en(entry.toJSON())));
+        } else {
+            this.list.push(entry);
+        }
     },
 
     // remove an entry
@@ -62,26 +68,27 @@ Entry.prototype = {
     // encrypt this Entry and it's decendants down recursively
     encrypt : function () {
         if (!this.encrypted) {
+            var en = structure.encryption(this.protocal);
             for (var i=0;i<this.list.length;i++) {
                 this.list[i].encrypt();
                 // TODO: actual encryption
-                this.list[i] = structure.str2hex(this.list[i].toJSON());
+                this.list[i] = structure.str2hex(en(this.list[i].toJSON()));
             }
             if (this.encryptNotes) {
                 // TODO: actual encryption
-                this.notes = structure.str2hex(this.notes);
+                this.notes = structure.str2hex(en(this.notes));
             }
             this.encrypted = true;
         }
-        return this.list;
     },
 
     // decrypt this Entry
     decrypt : function () {
-        if (this.encrypted) {
+        if (this.encrypted) { 
+            var de = structure.decryption(this.protocal);
             for (var i=0;i<this.list.length;i++) {
                 // TODO: actual decryption
-                this.list[i] = new Entry(JSON.parse(structure.hex2str(this.list[i])));
+                this.list[i] = new Entry(JSON.parse(de(structure.hex2str(this.list[i]))));
                 this.list[i]["parent"] = this;
                 this.list[i].index = i;
             }
@@ -102,6 +109,15 @@ Entry.prototype = {
             $(".hideOnMaster a").removeClass("ui-state-disabled");
         }
 
+        if (this.encrypted) {
+            $("#encryption-status").html("Encrypted");
+            $("#list li:nth-child(1) button").html("Decrypt");
+            $(".hideOnEncrypted a").addClass("ui-state-disabled");
+        } else {
+            $("#encryption-status").html("Decrypted");
+            $("#list li:nth-child(1) button").html("Encrypt");
+            $(".hideOnEncrypted a").removeClass("ui-state-disabled");
+        }
 
         /*<a href="format.html">
             <h2>PayPal</h2>
@@ -125,6 +141,7 @@ Entry.prototype = {
             state.setAttribute("class", "ui-li-aside");
             state.innerHTML = s.encrypted? "Encrypted" : "Decrypted";
             
+            li.setAttribute("class", "entry");
             li.appendChild(a);
             a.appendChild(name);
             a.appendChild(notes);
@@ -132,17 +149,10 @@ Entry.prototype = {
             document.getElementById("list").appendChild(li);
         }
 
-        $("#list li a:parent").remove();
+        $("#list .entry").remove();
         $("#list-title").html(this.name);
-            
-        if (this.encrypted) {
-            $("#encryption-status").html("Encrypted");
-            $("#list li:nth-child(1) button").html("Decrypt");
-        } else {
-            $("#encryption-status").html("Decrypted");
-            $("#list li:nth-child(1) button").html("Encrypt");
-        }
-            
+        document.title = this.name;
+         
         if (this.notes == null || this.notes.length == 0) {
             $("#list li:nth-child(1) p").html("");
         } else {
@@ -150,13 +160,20 @@ Entry.prototype = {
         }
         if (typeof this.list == "object") {
             for (var i=0;i<this.list.length;i++) {
-                stub(this.list[i]);
+                if (typeof this.list[i] == "string") {
+                    var li = document.createElement("li");
+                    li.setAttribute("class", "entry");
+                    li.innerHTML = this.list[i];
+                    document.getElementById("list").appendChild(li);
+                } else if (typeof this.list[i] == "object") {
+                    stub(this.list[i]);
+                }
             }
         }
     },
 
     toJSON : function () {
-        var params = ['name', 'notes', 'key', 'hashedPassword', 'protocal'];
+        var params = ['name', 'notes', 'key', 'hashedPassword', 'protocal', 'encrypted'];
         var str = '{';
 
         for (var i=0;i<params.length;i++) {
@@ -171,9 +188,12 @@ Entry.prototype = {
         if (typeof this.list != "undeined") {
             for (var i=0;i<this.list.length;i++) {
                 if (typeof this.list[i] == "string") {
-                    str += '"' + this.list[i] + '", ';
+                    str += '"' + this.list[i] + '"';
                 } else {
-                    str += '"' + this.list[i].toJSON() + '", ';
+                    str += '"' + this.list[i].toJSON() + '"';
+                }
+                if (i+1 != this.list.length) {
+                    str += ', ';
                 }
             }
         }
@@ -209,6 +229,38 @@ var structure = {
         return hex;
     },
 
+    toStorage : function () {
+        this.master.encrypt();
+        localStorage.setItem('entries', this.master.toJSON());
+    },
+
+    fromStorage : function () {
+        var m = localStorage.getItem('entries');
+        if (typeof m == "string") {
+            this.master = new Entry(JSON.parse(m));
+        }
+    },
+
+    encryption : function (str) {
+        switch(str) {
+            case "Default":
+            default:
+                return function (s) {
+                    return s;
+                };
+        }
+    },
+
+    decryption : function (str) {
+        switch(str) {
+            case "Default":
+            default:
+                return function (s) {
+                    return s;
+                };
+        }
+    },
+
     master : new Entry({
         name : "Master List",
         notes : "Master list of passwords",
@@ -220,4 +272,10 @@ var structure = {
         list : []
     }),
 }
+
+structure.fromStorage();
 structure.current = structure.master;
+window.addEventListener('unload', function(event) {
+    structure.toStorage();    
+});
+

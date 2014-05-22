@@ -4,6 +4,7 @@
     <title>FeistyPass - The Feistel Network Password Manager</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="fp.ico.png" type="image/x-icon" />
     <style type="text/css">
         table   {margin: auto;}
     </style>
@@ -115,8 +116,10 @@ function toggleEncrypt() {
 </head>
 <body onload="structure.master.display()">
     <div data-role="page" id="mainlist">
+            <button onclick="$('#state').html(localStorage.getItem('entries'));">state</button>
+            <div id="state"></div>
         <div data-role="header" data-theme="a">
-            <h1 id="list-title">Master List</h1>
+            <h1 id="list-title">FeistyPass - The Feistel Network Password Manager</h1>
             <span class="ui-li-count" id="encryption-status"></span>
         </div>
         <ul data-role="listview" data-inset="true" id="list" role="main" class="ui-content">
@@ -130,11 +133,11 @@ function toggleEncrypt() {
         <div data-role="footer" data-position="fixed">
             <div data-role="navbar">
                 <ul>
-                    <li>
+                    <li class="hideOnEncrypted">
                         <a href="#new" onclick="resetNew()"
                             class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-plus ui-btn-icon-bottom ui-btn-a">New</a>
                     </li>
-                    <li>
+                    <li class="hideOnEncrypted">
                         <a href="#edit" onclick="getCurrentEntry()"
                             class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-icon-edit ui-btn-icon-bottom ui-btn-a">Edit</a>
                     </li>
