@@ -3,6 +3,7 @@ var entryManager = {
     // load entries
     "init" : function () {
         this.load();
+        this.feistel = new Feistel("", null, 10);
     },
 
     // creates a new "entry" object
@@ -22,24 +23,30 @@ var entryManager = {
     },
 
     // creates a new "entry" object and adds it to the list
-    "new" : function (title, desc, secret) {
+    "new" : function (title, desc, secret, pass) {
         this.entries.push(this.create(title, desc, secret));
+        this.hashes.push(this.hash(pass));
         this.save();
     },
 
     // adds a new "entry" object and adds it to the list
-    "add" : function (entry) {
+    "add" : function (entry, pass) {
         this.entries.push(entry);
+        this.hashes.push(this.hash(pass));
         this.save();
     },
 
     // edits the current entry
-    "edit" : function (title, desc, secret) {
+    "edit" : function (title, desc, secret, pass) {
         if (this.index > -1) {
             var entry = this.entries[this.index];
             entry.title = title;
             entry.description = desc;
-            entry.secret = secret;
+            if (!entry.encrypted) {
+                entry.secret = secret;
+                if (pass != null)
+                    this.hashes[this.index] = this.hash(pass);
+            }
             this.save();
         } else {
             alert ("Error: Could not edit entry because no entry is selected");
@@ -51,6 +58,7 @@ var entryManager = {
         if (index >= 0 && index < this.entries.length) {
             // delete specified
             this.entries.splice(index, 1);
+            this.hashes.splice(index, 1);
 
             // adjust current entry to account for changes in entry list
             if (index == this.index) {
@@ -62,6 +70,7 @@ var entryManager = {
             // delete current
             if (this.index > -1) {
                 this.entries.splice(this.index, 1);
+                this.hashes.splice(this.index, 1);
                 this.index = -1;
             }
         }
@@ -69,44 +78,79 @@ var entryManager = {
         this.save();
     },
 
+    "feistel" : null,
+
     // encrypt secret section of current entry
-    "encrypt" : function (e) {
+    "encrypt" : function (e, i, save) {
         // use password's hash to encrypt
         // do not use the password directly as that would force it to be unsecure
-        if (e == null) {
+        if (e == null && i == null) {
             if (this.index != -1) {
                 e = this.entries[this.index];
+                i = this.index;
             } else {
-                return;
+                return false;
             }
         }
+        if (i == null)
+            return false;
 
         if (!e.encrypted) {
-            e.secret = str2hex(JSON.stringify(e.secret));
+            this.feistel.key = this.hashes[i];
+            e.secret = str2hex(this.feistel.encrypt(JSON.stringify(e.secret)));
             e.encrypted = true;
+            if (save == null || save == false)
+                this.hashes[i] = null;
+            this.feistel.key = "";
+            return true;
         }
+        return false;
     },
 
     // decrypt secret section of current entry
-    "decrypt" : function (e) {
+    "decrypt" : function (pass, e, i, save) {
         if (e == null) {
             if (this.index != -1) {
                 e = this.entries[this.index];
+                i = this.index;
             } else {
-                return;
+                return false;
             }
         }
 
         if (e.encrypted) {
-            e.secret = JSON.parse(hex2str(e.secret));
-            e.encrypted = false;
+            if (save == null)
+                this.hashes[i] = this.hash(pass);
+            this.feistel.key = this.hashes[i];
+            var s = this.feistel.decrypt(hex2str(e.secret));
+            if (s[0] == "{") {
+                e.secret = JSON.parse(s);
+                e.encrypted = false;
+                this.feistel.key = "";
+                return true;
+            } else {
+                this.hashes[i] = null;
+                return false;
+            }
         }
+        return false;
     },
 
     // save entries as JSON strings
     "save" : function () {
         if (typeof localStorage != "undefined") {
+            // first encrypt everything
+            for (var i=0;i<this.hashes.length;i++)
+                if (this.hashes[i] != null)
+                    this.encrypt(this.entries[i], i, true);
+            
+            // save to local storage
             localStorage.setItem('entries', JSON.stringify(this.entries));
+
+            // decrypt everything that wasn't encrypted before save
+            for (var i=0;i<this.hashes.length;i++)
+                if (this.hashes[i] != null)
+                    this.decrypt(null, this.entries[i], i, true);
         }
     },
 
@@ -116,12 +160,31 @@ var entryManager = {
             var state = JSON.parse(window.localStorage.getItem('entries'));
             if (state != null) {
                 this.entries = state;
+                for (var i=0;i<this.entries.length;i++) {
+                    this.hashes.push(null);
+                }
             }
+
+            var salt = JSON.parse(window.localStorage.getItem('salt'));
+            if (salt != null) {
+                this.salt = salt;
+            } else {
+                this.salt = "thinkOfABetterMethodForGettingFirstSalt";
+            }
+
         }
     },
 
     "index" : -1,
     "entries" : [],
+    "hashes" : [],
+    "hash" : function (pass) {
+        if (typeof pass == "string")
+            return SHA512(this.salt+pass);
+        else
+            return SHA512(this.salt);
+    },
+
     // idea for sub-indexing:
     // an array starting with the entry in the main list,
     // and then the next entry in the array is for the subentry of the previously selected entry
@@ -193,16 +256,13 @@ var display = {
         that.index++;
     },
 
-    "formTable" : function (title, desc) {
+    "formTable" : function (title, desc, encrypted) {
         var table = document.createElement("table");
         var tr = document.createElement("tr");
         var th = document.createElement("th");
         var td = document.createElement("td");
         th.innerHTML = "Title";
-        if (title == null)
-            td.innerHTML = '<input id="title" />';
-        else
-            td.innerHTML = '<input id="title" value="' + title + '" />';
+        td.innerHTML = '<input id="title" value="' + (title?title:'') + '" />';
         tr.appendChild(th);
         tr.appendChild(td);
         table.appendChild(tr);
@@ -211,17 +271,45 @@ var display = {
         th = document.createElement("th");
         td = document.createElement("td");
         th.innerHTML = "Description";
-        td.innerHTML = '<textarea id="desc" value="">' + desc + '</textarea>';
+        td.innerHTML = '<textarea id="desc" value="">' + (desc?desc:"") + '</textarea>';
+        tr.appendChild(th);
+        tr.appendChild(td);
+        table.appendChild(tr);
+        
+        tr = document.createElement("tr");
+        th = document.createElement("th");
+        td = document.createElement("td");
+        if (encrypted) {     
+            td.colSpan = "2";
+            td.innerHTML = '<p class="small">(Cannot change anything more on an encrypted entry)</p>';
+            tr.appendChild(td);
+            table.appendChild(tr);
+            return table;
+        }
+        
+        th.innerHTML = 'Password<p class="small">This password will be used to encrypt this entry.<br />This password will not be shown.</p>';
+        td.innerHTML = '<input id="pass1" type="password" placeholder="password" />';
+        tr.appendChild(th);
+        tr.appendChild(td);
+        table.appendChild(tr);
+
+        tr = document.createElement("tr");
+        th = document.createElement("th");
+        td = document.createElement("td");
+        th.innerHTML = 'Confirm';
+        td.innerHTML = '<input id="pass2" type="password" placeholder="password" />';
         tr.appendChild(th);
         tr.appendChild(td);
         table.appendChild(tr);
 
         tr = document.createElement("tr");
         td = document.createElement("td");
-        td.colspan = "2";
+        td.colSpan = "2";
         td.innerHTML = '<button onclick="display.addRow(this)" id="count">More Rows</button>';
         tr.appendChild(td);
         table.appendChild(tr);
+        var button = table.getElementsByTagName("button")[0];
+        button.index = 0;
 
         return table;
     },
@@ -468,15 +556,27 @@ var buttons = {
         p.innerHTML = "Fill out the following form and press submit to create a new password entry:";
 
         var table = display.formTable();
-
         var button = table.getElementsByTagName("button")[0];
-        button.index = 0;
         display.addRow(button, "Username");
         display.addRow(button, "Password");
 
         button = document.createElement("button");
         button.innerHTML = "Create New Entry";
+        button.setAttribute("class", "submit");
         button.addEventListener("click", function () {
+            var pass1 = document.getElementById("pass1").value;
+            var pass2 = document.getElementById("pass2").value;
+            if (pass1 != pass2) {
+                alert ("Could not create entry, passwords do not match!");
+                document.getElementById("pass1").style.border = "1px solid #f00";
+                document.getElementById("pass1").style.boxShadow = "0 0 4px 0 #f00";
+                document.getElementById("pass2").style.border = "1px solid #f00";
+                document.getElementById("pass2").style.boxShadow = "0 0 4px 0 #f00";
+                return;
+            }
+            if (pass1 == "")
+                if (!confirm("No password set, are you sure you don't want to set a password?"))
+                    return;
             var title = document.getElementById("title").value;
             var desc = document.getElementById("desc").value;
             var secret = {};
@@ -487,8 +587,9 @@ var buttons = {
                     secret[document.getElementById("k"+i).value] = document.getElementById("v"+i).value;
                 }
             }
-            entryManager["new"](title, desc, secret);
+            entryManager["new"](title, desc, secret, pass1);
             entryManager.index = entryManager.entries.length-1;
+            entryManager["encrypt"]();
             display.current();
             list.build();
         }, false);
@@ -507,30 +608,54 @@ var buttons = {
         p.innerHTML = "Edit the following form and press submit to edit this password entry:";
 
         var entry = entryManager.entries[entryManager.index];
-        var table = display.formTable(entry.title, entry.description);
-        var button = table.getElementsByTagName("button")[0];
-        button.index = 0;
-        for (var i in entry.secret) {
-            display.addRow(button, i, entry.secret[i]);
-        }
+        var table = display.formTable(
+                entry.title, entry.description, entry.encrypted);
 
         button = document.createElement("button");
         button.innerHTML = "Edit Current Entry";
-        button.addEventListener("click", function () {
-            var title = document.getElementById("title").value;
-            var desc = document.getElementById("desc").value;
-            var secret = {};
+        button.setAttribute("class", "submit");
 
-            var count = document.getElementById("count").index;
-            for (var i=0;i<count;i++) {
-                if (document.getElementById("k"+i)) {
-                    secret[document.getElementById("k"+i).value] = document.getElementById("v"+i).value;
-                }
+        if (!entry.encrypted) {
+            for (var i in entry.secret) {
+                display.addRow(button, i, entry.secret[i]);
             }
-            entryManager["edit"](title, desc, secret);
-            display.current();
-            list.build();
-        }, false);
+
+            button.addEventListener("click", function () {
+                var pass1 = document.getElementById("pass1");
+                var pass2 = document.getElementById("pass2");
+                if (pass1.value != pass2.value) {
+                    alert ("Could not create entry, passwords do not match!");
+                    pass1.style.border = "1px solid #f00";
+                    pass1.style.boxShadow = "0 0 4px 0 #f00";
+                    pass2.style.border = "1px solid #f00";
+                    pass2.style.boxShadow = "0 0 4px 0 #f00";
+                    return;
+                }
+
+                var title = document.getElementById("title").value;
+                var desc = document.getElementById("desc").value;
+                var secret = {};
+
+                var count = document.getElementById("count").index;
+                for (var i=0;i<count;i++) {
+                    if (document.getElementById("k"+i)) {
+                        secret[document.getElementById("k"+i).value] = document.getElementById("v"+i).value;
+                    }
+                }
+                entryManager["edit"](title, desc, secret, (pass1==""?null:pass1));
+                entryManager["encrypt"]();
+                display.current();
+                list.build();
+            }, false);
+        } else {
+            button.addEventListener("click", function () {
+                var title = document.getElementById("title").value;
+                var desc = document.getElementById("desc").value;
+                entryManager["edit"](title, desc);
+                display.current();
+                list.build();
+            }, false);
+        }
 
         display.byElements(null, [p, table, button]);
         this.state(true, true, true, null);
@@ -562,28 +687,8 @@ var buttons = {
 
     // builds/displays the "encrypt current password entry" form
     "encrypt" : function () {
-        var h2 = document.createElement("h2");
-        h2.innerHTML = "Encrypt this Entry?";
-
-        var p = document.createElement("p");
-        if (typeof entryManager.entries[entryManager.index].hash != "undefined")
-            p.innerHTML = "<button>Change Password</button>";
-        else
-            p.innerHTML = "Password: <input type=\"password\" id=\"password\"/>";
-
-        var yes = document.createElement("button");
-        yes.innerHTML = "yes";
-        yes.addEventListener("click", function () {
-            entryManager.encrypt();
-            display.current();
-        }, false);
-
-        var no = document.createElement("button");
-        no.innerHTML = "No";
-        no.addEventListener("click", function () {
-            display.current();
-        }, false);
-        display.byElements(null, [h2, p, yes, no]);
+        entryManager.encrypt();
+        display.current();
     },
 
     // builds/displays the "decrypt current password entry" form
@@ -597,7 +702,7 @@ var buttons = {
         var yes = document.createElement("button");
         yes.innerHTML = "yes";
         yes.addEventListener("click", function () {
-            entryManager.decrypt();
+            entryManager.decrypt(document.getElementById("password").value);
             display.current();
         }, false);
 
@@ -748,7 +853,12 @@ window.addEventListener("load", function () {
     list.init();
     buttons.init();
     layout.init();
-    
     list.build();
     buttons.state(false, false, false, true);
+    if (entryManager.entries.length == 0) {
+
+    } else {
+        list.ul.getElementsByTagName("li")[0].select();
+    }
+
 }, false);
