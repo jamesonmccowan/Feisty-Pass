@@ -191,7 +191,7 @@ var entryManager = {
         	    if (salt != null) {
     	            this.salt = salt;
 	            } else {
-                	this.salt = "thinkOfABetterMethodForGettingFirstSalt";
+                	this.salt = "thinkOfABetterSalt";
             	}
         	} else {
 				alert("Error: localStorage not found");

@@ -27,7 +27,8 @@ body, input, button {font-size: 14pt;}
 
 .lbox, .body {
     border-radius: 5px;
-    background: white;}
+    background: white;
+    padding: 1px;}
 
 .lbox {width: 30%;}
 
@@ -37,7 +38,8 @@ body, input, button {font-size: 14pt;}
 
 #main {margin: auto;
     border-radius: 5px;
-    background: #8ac;}
+    background: #8ac;
+    border-spacing: 10px 10px;}
 
 #header {height: 10%;
     max-height: 10%;}
