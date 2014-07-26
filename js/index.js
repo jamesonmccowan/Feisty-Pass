@@ -893,7 +893,7 @@ function layout () {
 
     head.style.height = (window.innerHeight*0.1) + "px";
     main.style.height = (window.innerHeight*0.98) + "px";
-    main.style.width = (window.innerWidth*0.98) + "px";
+    main.style.width = (window.innerWidth*0.98-10) + "px";
     main.style.marginTop = (window.innerHeight*0.01) + "px";
     main.style.marginBottom = (window.innerHeight*0.01) + "px";
 

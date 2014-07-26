@@ -149,11 +149,32 @@
             <p>The Following is a light overview of cryptography</p>
             <dl>
                 <dt>What is salt?</dt>
-                <dd></dd>
+                <dd>A salt is a random string used to create additional protections against a variety of decryption methods.<br />
+                For example, an attacker may take a list of common passwords and encrypt them to see if any match our encrypted passwords.
+                By having a salt that's different then the default, the attacker can't see if the password matches any of the previous ones without having to do the same work all over again with the new salt.</dd>
             </dl>
             <dl>
                 <dt>What is a Feistel Network?</dt>
-                <dd></dd>
+                <dd><p>A Feistel Network is a key element of many encryption schemes. The steps a Feistel Netork performs are as follows:</p>
+                <table><tr>
+                    <td>
+                        <ol>
+                            <li>Break the text into a left block (L<sub>n</sub>) and a right block (R<sub>n</sub>).</li>
+                            <li>Copy the right block into the new left block.<br />
+                            L<sub>n+1</sub> = R<sub>n</sub></li>
+
+                            <li>Run the old right block and a key through a one way function.<br />
+                            x = F(R<sub>n</sub>, K<sub>n</sub>)</li>
+
+                            <li>Combind the previous result with the old left block to create the new right block.<br />
+                            R<sub>n+1</sub> = L<sub>n</sub> &#8853; x</li>
+
+                            <li>Repeat steps 1 through 4 for as many times as specified.</li>
+                        </ol>
+                        <p>This process can be used to encrypt and decrypt a block of text.</p>
+                    </td>
+                    <td><img src="img/feistel_cipher.png" /></td>
+                </tr></table></dd>
             </dl>
         </div>
     </body>
