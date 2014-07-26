@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 // manage the password entries
 var entryManager = {
     // load entries
@@ -138,14 +157,15 @@ var entryManager = {
 
     // save entries as JSON strings
     "save" : function () {
-        if (typeof localStorage != "undefined") {
+        if (typeof window.localStorage != "undefined") {
             // first encrypt everything
             for (var i=0;i<this.hashes.length;i++)
                 if (this.hashes[i] != null)
                     this.encrypt(this.entries[i], i, true);
             
             // save to local storage
-            localStorage.setItem('entries', JSON.stringify(this.entries));
+            window.localStorage.setItem('entries', JSON.stringify(this.entries));
+            window.localStorage.setItem('salt', this.salt);
 
             // decrypt everything that wasn't encrypted before save
             for (var i=0;i<this.hashes.length;i++)
@@ -156,23 +176,92 @@ var entryManager = {
 
     // load entries from JSON strings
     "load" : function () {
-        if (typeof window.localStorage != "undefined" && typeof JSON != "undefined") {
-            var state = JSON.parse(window.localStorage.getItem('entries'));
-            if (state != null) {
-                this.entries = state;
-                for (var i=0;i<this.entries.length;i++) {
-                    this.hashes.push(null);
+		try {
+        	if (typeof window.localStorage != "undefined" && typeof JSON != "undefined") {
+    	        var state = JSON.parse(window.localStorage.getItem('entries'));
+	            if (state != null) {
+                	this.entries = state;
+                    this.hashes = [];
+            	    for (var i=0;i<this.entries.length;i++) {
+        	            this.hashes.push(null);
+    	            }
+	            }
+
+            	var salt = window.localStorage.getItem('salt');
+        	    if (salt != null) {
+    	            this.salt = salt;
+	            } else {
+                	this.salt = "thinkOfABetterMethodForGettingFirstSalt";
+            	}
+        	} else {
+				alert("Error: localStorage not found");
+			}
+		} catch (e) {
+			alert("Error: load function crashed");
+		}
+    },
+
+    // save entries to file
+    "toFile" : function () {
+        // first encrypt everything
+        for (var i=0;i<this.hashes.length;i++)
+            if (this.hashes[i] != null)
+                this.encrypt(this.entries[i], i, true);
+            
+        // save to local storage
+        var save = {
+            "entries" : this.entries,
+            "salt" : this.salt
+        };
+        var blob = new Blob([JSON.stringify(save)], {type:'text/plain'});
+        var downloadLink = document.createElement("a"); 
+        downloadLink.download = "feistypass" + (new Date()).toJSON().substr(0, 10) + ".txt";
+        downloadLink.innerHTML = "<br />save as text file";
+        downloadLink.href = window.URL.createObjectURL(blob);
+        downloadLink.onclick = function (event) {document.body.removeChild(event.target);};
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+
+        // decrypt everything that wasn't encrypted before save
+        for (var i=0;i<this.hashes.length;i++)
+            if (this.hashes[i] != null)
+                this.decrypt(null, this.entries[i], i, true);
+    },
+
+    // load entries from file
+    "fromFile" : function () {
+        var file = document.createElement("input");
+        file.type="file";
+        file.style.display = "none";
+        file.addEventListener("change", function () {
+            var fileToLoad = this.files[0];
+            var fileReader = new FileReader();
+            fileReader.onload = function(fileLoadedEvent) {
+                var state = JSON.parse(fileLoadedEvent.target.result);
+	            if (state.entries != null) {
+                	entryManager.entries = state.entries;
+                    entryManager.hashes = [];
+            	    for (var i=0;i<entryManager.entries.length;i++) {
+        	            entryManager.hashes.push(null);
+    	            }
+	            }
+
+        	    if (state.salt != null) {
+    	            entryManager.salt = state.salt;
+	            }
+                list.build();
+                buttons.state(false, false, false, true);
+                if (entryManager.entries.length > 0) {
+                    list.ul.getElementsByTagName("li")[0].select();
                 }
             }
+            fileReader.readAsText(fileToLoad, "UTF-8");
 
-            var salt = JSON.parse(window.localStorage.getItem('salt'));
-            if (salt != null) {
-                this.salt = salt;
-            } else {
-                this.salt = "thinkOfABetterMethodForGettingFirstSalt";
-            }
-
-        }
+            this.parentNode.removeChild(this);
+        }, false);
+        document.body.appendChild(file);
+        file.click();
     },
 
     "index" : -1,
@@ -239,12 +328,14 @@ var display = {
         // valuke input box
         var input = document.createElement("input");
         input.setAttribute("id", "v" + that.index);
+        input.setAttribute("class", "v");
         input.setAttribute("value", (value==null?"":value));
         td.appendChild(input);
 
         // delete row button
         var input = document.createElement("button");
         input.innerHTML = "X";
+        input.setAttribute("class", "x");
         input.addEventListener("click", function () {
             this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode);
         }, false);
@@ -256,8 +347,12 @@ var display = {
         that.index++;
     },
 
+	// create form table for entries
     "formTable" : function (title, desc, encrypted) {
         var table = document.createElement("table");
+        table.setAttribute("class", "form");
+
+		// title input
         var tr = document.createElement("tr");
         var th = document.createElement("th");
         var td = document.createElement("td");
@@ -267,6 +362,7 @@ var display = {
         tr.appendChild(td);
         table.appendChild(tr);
 
+		// description input
         tr = document.createElement("tr");
         th = document.createElement("th");
         td = document.createElement("td");
@@ -275,24 +371,34 @@ var display = {
         tr.appendChild(th);
         tr.appendChild(td);
         table.appendChild(tr);
-        
+
         tr = document.createElement("tr");
-        th = document.createElement("th");
         td = document.createElement("td");
-        if (encrypted) {     
+        if (encrypted) {
             td.colSpan = "2";
             td.innerHTML = '<p class="small">(Cannot change anything more on an encrypted entry)</p>';
             tr.appendChild(td);
             table.appendChild(tr);
             return table;
+        } else {
+            td.colSpan = "2";
+            td.innerHTML = "This password will be used to encrypt this entry. This password will not be shown.";
+            td.setAttribute("class", "small");
+            tr.appendChild(td);
+            table.appendChild(tr);
         }
-        
-        th.innerHTML = 'Password<p class="small">This password will be used to encrypt this entry.<br />This password will not be shown.</p>';
+
+		// change password input
+        tr = document.createElement("tr");
+        th = document.createElement("th");
+        td = document.createElement("td");
+        th.innerHTML = 'Password';
         td.innerHTML = '<input id="pass1" type="password" placeholder="password" />';
         tr.appendChild(th);
         tr.appendChild(td);
         table.appendChild(tr);
 
+		// confirm change password input
         tr = document.createElement("tr");
         th = document.createElement("th");
         td = document.createElement("td");
@@ -302,29 +408,32 @@ var display = {
         tr.appendChild(td);
         table.appendChild(tr);
 
+		// add rows button
         tr = document.createElement("tr");
         td = document.createElement("td");
         td.colSpan = "2";
-        td.innerHTML = '<button onclick="display.addRow(this)" id="count">More Rows</button>';
+        td.innerHTML = '<p class="small">The following section will be encrypted</p><button onclick="display.addRow(this)" id="count">More Rows</button>';
         tr.appendChild(td);
         table.appendChild(tr);
-        var button = table.getElementsByTagName("button")[0];
-        button.index = 0;
 
         return table;
     },
 
+	// display an entry
     "entry" : function (e, index) {
+		// ery encrypted status
         var encrypted = document.createElement("div");
         encrypted.innerHTML="<b>Status</b>: " + (e.encrypted?"Encrypted":"Decrypted");
         encrypted.setAttribute("class", "encrypted");
 
+		// entry description
         var description = document.createElement("p");
         description.innerHTML = e.description;
         description.setAttribute("class", "description");
 
         var secret;
         if (!e.encrypted) {
+			// display secret entries
             secret = document.createElement("table");
             for (var i in e.secret) {
                 if (typeof e.secret[i] == "string") {
@@ -339,6 +448,7 @@ var display = {
                 }
             }
         } else {
+			// display encrypted hex string
             secret = document.createElement("div");
             secret.innerHTML = e.secret;
         }
@@ -354,6 +464,7 @@ var display = {
         buttons.state(true, true, true, !e.encrypted);
     },
 
+	// display current entry
     "current" : function () {
         this.entry(entryManager.entries[entryManager.index], entryManager.index);
     }
@@ -509,35 +620,13 @@ var list = {
 var buttons = {
     // set up buttons
     "init" : function () {
-        this.dom["new"] = document.getElementById("new");
-        this.dom["new"].addEventListener("click", function () {
-            buttons["new"]();
-        }, false);
-
-        this.dom["edit"] = document.getElementById("edit");
-        this.dom["edit"].addEventListener("click", function () {
-            buttons["edit"]();
-        }, false);
-
-        this.dom["delete"] = document.getElementById("delete");
-        this.dom["delete"].addEventListener("click", function () {
-            buttons["delete"]();
-        }, false);
-
-        this.dom["crypt"] = document.getElementById("crypt");
-        this.dom["crypt"].addEventListener("click", function () {
-            buttons["crypt"]();
-        }, false);
-
-        this.dom["p"] = document.getElementById("p");
-        this.dom["p"].addEventListener("click", function () {
-            layout.toPortrait();
-        }, false);
-
-        this.dom["l"] = document.getElementById("l");
-        this.dom["l"].addEventListener("click", function () {
-            layout.toLandscape();
-        }, false);
+        var b = ["new", "edit", "delete", "crypt", "save", "load", "config", "help"];
+        for (var i=0;i<b.length;i++) {
+            this.dom[b[i]] = document.getElementById(b[i]);
+            this.dom[b[i]].addEventListener("click", function () {
+                buttons[new String(this.id)]();
+            }, false);
+        }
     },
 
     "dom" : {
@@ -545,6 +634,11 @@ var buttons = {
         "edit" : null,
         "delete" : null,
         "crypt" : null,
+        "crypt" : null,
+        "save" : null,
+        "load" : null,
+        "config" : null,
+        "help" : null,
     },
 
     // builds/displays the "create new password entry" form
@@ -611,15 +705,16 @@ var buttons = {
         var table = display.formTable(
                 entry.title, entry.description, entry.encrypted);
 
-        button = document.createElement("button");
-        button.innerHTML = "Edit Current Entry";
-        button.setAttribute("class", "submit");
 
+        var button = table.getElementsByTagName("button")[0];
         if (!entry.encrypted) {
             for (var i in entry.secret) {
                 display.addRow(button, i, entry.secret[i]);
             }
 
+            button = document.createElement("button");
+            button.innerHTML = "Edit Current Entry";
+            button.setAttribute("class", "submit");
             button.addEventListener("click", function () {
                 var pass1 = document.getElementById("pass1");
                 var pass2 = document.getElementById("pass2");
@@ -630,6 +725,8 @@ var buttons = {
                     pass2.style.border = "1px solid #f00";
                     pass2.style.boxShadow = "0 0 4px 0 #f00";
                     return;
+                } else {
+                    pass1 = pass1.value;
                 }
 
                 var title = document.getElementById("title").value;
@@ -648,6 +745,9 @@ var buttons = {
                 list.build();
             }, false);
         } else {
+            button = document.createElement("button");
+            button.innerHTML = "Edit Current Entry";
+            button.setAttribute("class", "submit");
             button.addEventListener("click", function () {
                 var title = document.getElementById("title").value;
                 var desc = document.getElementById("desc").value;
@@ -715,6 +815,57 @@ var buttons = {
 
     },
 
+    // save to file
+    "save" : function () {
+        entryManager.toFile();
+    },
+
+    // load from file
+    "load" : function () {
+        entryManager.fromFile();
+    },
+
+    // build config page
+    "config" : function () {
+        document.getElementById("header").innerHTML="Configuration";
+        var body = document.getElementById("body");
+        body.innerHTML = "";
+
+        var p = document.createElement("p");
+        p.innerHTML = "Configuration Options";
+
+        var table = document.createElement("table");
+        table.setAttribute("class", "form");
+        var tr = document.createElement("tr");
+        var th = document.createElement("th");
+        var td = document.createElement("td");
+        th.innerHTML = "Salt";
+        td.innerHTML = '<input id="salt" value="' + entryManager.salt + '" />';
+        tr.appendChild(th);
+        tr.appendChild(td);
+        table.appendChild(tr);
+
+        var button = document.createElement("button");
+        button.setAttribute("class", "submit");
+        button.innerHTML = "Save Changes";
+        button.addEventListener("click", function () {
+            entryManager.salt = document.getElementById("salt").value;
+            entryManager.save();
+        }, false);
+
+        body.appendChild(p);
+        body.appendChild(table);
+        body.appendChild(button);
+        this.state(false, false, false, null);
+    },
+
+    // display help information
+    "help" : function () {
+        document.getElementById("header").innerHTML="Help";
+        document.getElementById("body").innerHTML = document.getElementById("h").innerHTML;
+        this.state(false, false, false, null);
+    },
+
     // governs which buttons are enabled and whether it says Encrypt or Decrypt
     "state"  : function (e, d, c, encrypt) {
         if (e != null)
@@ -729,102 +880,36 @@ var buttons = {
 }
 
 // manage where the display box and list box are
-var layout = {
-    "init" : function () {
-        this.view = document.getElementById("view");
-        this.list = document.getElementById("list");
-        this.body = document.getElementById("body");
-        this.lbox = document.getElementById("lbox");
+function layout () {
+    var main = document.getElementById("main");
+    var head = document.getElementById("header");
+    var body = document.getElementById("body");
+    var lbox = document.getElementById("lbox");
 
-        // make it so the header height doesn't change
-        var h = document.getElementById("header");
-        h.parentNode.style.height = h.clientHeight + "px";
-        h.style.height = h.clientHeight + "px";
+	for (var i=0;i<body.children.length;i++)
+		body.children[i].style.display = "none";
+	for (var i=0;i<lbox.children.length;i++)
+		lbox.children[i].style.display = "none";
 
-        var content = body.innerHTML;
-        body.innerHTML = "<br />";
+    head.style.height = (window.innerHeight*0.1) + "px";
+    main.style.height = (window.innerHeight*0.98) + "px";
+    main.style.width = (window.innerWidth*0.98) + "px";
+    main.style.marginTop = (window.innerHeight*0.01) + "px";
+    main.style.marginBottom = (window.innerHeight*0.01) + "px";
 
-        // get proper fixed sizes for landscape
-        this.landscape.body.height=(this.body.parentNode.clientHeight-10)+"px";
-        this.landscape.body.width =(this.body.parentNode.clientWidth-10) +"px";
-        this.landscape.lbox.height=(this.lbox.parentNode.clientHeight-10)+"px";
-        this.landscape.lbox.width =(this.lbox.parentNode.clientWidth-10) +"px";
+    body.style.height="";
+    body.style.width ="";
+    lbox.style.height="";
+    lbox.style.width ="";
+    body.style.height=body.clientHeight+"px";
+    body.style.width =body.clientWidth +"px";
+    lbox.style.height=lbox.clientHeight+"px";
+    lbox.style.width =lbox.clientWidth +"px";
 
-        // get proper fixed sizes for portrait
-        this.toPortrait();
-        this.portrait.body.height=(this.body.parentNode.clientHeight-10)+"px";
-        this.portrait.body.width =(this.body.parentNode.clientWidth-10) +"px";
-        this.portrait.lbox.height=(this.lbox.parentNode.clientHeight-10)+"px";
-        this.portrait.lbox.width =(this.lbox.parentNode.clientWidth-10) +"px";
-
-        this.toLandscape();
-        body.innerHTML = content;
-    },
-    "isLandscape" : true,
-    "view" : null,
-    "list" : null,
-    "body" : null,
-    "lbox" : null,
-
-    "setup" : function (styles) {
-        for (var i in styles) {
-            for (var j in styles[i]) {
-                this[i].style[j] = styles[i][j];
-            }
-        }
-    },
-
-    "toPortrait" :function () {
-        this.isLandscape = false;
-        this.setup(this.portrait);
-    },
-
-    "toLandscape" :function () {
-        this.isLandscape = true;
-        this.setup(this.landscape);
-    },
-
-    "portrait" : {
-        "view" : {
-            "height" : "43.5%",
-            "width" : "98%"
-        },
-        "list" : {
-            "top" : "45.5%",
-            "left" : "1%",
-            "height" : "43.5%",
-            "width" : "98%"
-        },
-        "body" : {
-            //"height" : "0px", 
-            //"width" : "0px"
-        },
-        "lbox" : {
-            //"height" : "0px",
-            //"width" : "0px"
-        },
-    },
-
-    "landscape" : {
-        "view" : {
-            "height" : "88%",
-            "width" : "48.5%"
-        },
-        "list" : {
-            "top" : "1%",
-            "left" : "50.5%",
-            "height" : "88%",
-            "width" : "48.5%"
-        },
-        "body" : {
-            //"height" : "0px",
-            //"width" : "0px"
-        },
-        "lbox" : {
-            //"height" : "0px",
-            //"width" : "0px"
-        },
-    },
+	for (var i=0;i<body.children.length;i++)
+		body.children[i].style.display = "";
+	for (var i=0;i<lbox.children.length;i++)
+		lbox.children[i].style.display = "";
 }
 
 
@@ -852,13 +937,11 @@ window.addEventListener("load", function () {
     display.init();
     list.init();
     buttons.init();
-    layout.init();
+    layout();
+    window.onresize = function () {layout();}
     list.build();
     buttons.state(false, false, false, true);
-    if (entryManager.entries.length == 0) {
-
-    } else {
+    if (entryManager.entries.length > 0) {
         list.ul.getElementsByTagName("li")[0].select();
     }
-
 }, false);

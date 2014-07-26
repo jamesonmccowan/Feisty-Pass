@@ -1,48 +1,160 @@
 <!DOCTYPE html>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
 <html>
-<head>
-    <title>Feisty Pass</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="shortcut icon" href="fp.ico.png" type="image/x-icon" />
-    <link type="text/css" rel="stylesheet" href="styles/display.css" />
-    <script type="text/javascript" src="scripts/SHA-512.js"></script>
-    <script type="text/javascript" src="scripts/feistel.js"></script>
-    <script type="text/javascript" src="scripts/display.js"></script>
-</head>
-<body>
-    <div class="bg">
-        <table id="view">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=medium-dpi" />
+        <title>Feisty Pass</title>
+        <link type="text/css" rel="stylesheet" href="css/index.css" />
+        <script type="text/javascript" src="js/SHA-512.js"></script>
+        <script type="text/javascript" src="js/feistel.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+    </head>
+    <body>
+        <table id="main">
             <tr>
-                <th>
-                    <div id="header">Feisty Pass</div>
-                </th>
+                <th id="header">Feisty Pass</th>
+                <td class="lbox" rowspan="2">
+                    <div id="lbox"><br /></div>
+                </td>
             </tr>
             <tr>
                 <td class="body">
                     <div id="body">
                         <p style="text-align: center;">Welcome To Feisty Pass, the password encryption app!</p>
+                        <p>Just getting started? It's strongly recommended you change a different salt in the config menu before beginning.</p>
+                        <p>Learn more about feistypass, salt, and encryption in general by seeing the help section.</p>
                     </div>
                 </td>
             </tr>
-        </table>
-
-        <table id="list">
-            <tr>
-                <td class="lbox">
-                    <div id="lbox"><br /></div>
-                </td>
+    
+            <tr id="buttons">
+                <td colspan="2">
+                    <table>
+                        <tr>
+                            <td><button id="new">New</button></td>
+                            <td><button id="edit">Edit</button></td>
+                            <td><button id="delete">Delete</button></td>
+                            <td><button id="crypt">Decrypt</button></td>
+                        </tr>
+                        <tr>
+                            <td><button id="save">Save</button></td>
+                            <td><button id="load">Load</button></td>
+                            <td><button id="config" >Config</button></td>
+                            <td><button id="help">Help</button></td>
+                        </tr>
+                    </table>
+                <td>
             </tr>
         </table>
-
-        <table id="buttons"><tr>
-            <td><button id="new">New</button></td>
-            <td><button id="edit">Edit</button></td>
-            <td><button id="delete">Delete</button></td>
-            <td><button id="crypt">Decrypt</button></td>
-            <td><button id="p">Portrait</button></td>
-            <td><button id="l">Landscape</button></td>
-        </tr></table>
-    </div>
-</body>
+        <div id="h">
+            <dl>
+                <dt>What Is Feisty Pass?</dt>
+                <dd>Feisty Pass is a password management app that automatically encrypts its entries by using feistel networks and another password.</dd>
+            </dl>
+            <dl>
+                <dt>Will my passwords be safe?</dt>
+                <dd>Based on my understanding of cryptography, yes.
+                However, I am not an expert in cryptography and can make no guarantee and thus can make no promises.</dd>
+            </dl>
+            <dl>
+                <dt>Creating a New Entry</dt>
+                <dd>
+                    <ol>
+                        <li>Press the "New" button at the lower right of the screen.<br />
+                        <span>This will display the form used to create new entries</span></li>
+                        <li>Optional: Give the entry a title and description.<br />
+                        <span>Though not required, they are intended to help you recognize and use your passwords.
+                        For example a website could require some special condition before or afer entering 
+                        your password and a description is the perfect place to make note of it</span></li>
+                        <li>Optional: add and delete fields from the section that will be encrypted.<br />
+                        <span>Though for many things a username and password are enough, some things require more data that you don't want other people knowing.
+                        This is also a good place to put the answers to security questions.<br />
+                        Add a feild by pressing the "More Rows" button. Delete a feild by pressing the "X" button to the left of the field.</span></li>
+                        <li>Optional: set a password.<br />
+                        <span>This is highly recommended, as without a password the only thing protecting the entry is the salt (see below).</span></li>
+                        <li>Press the "Create New Entry" button.<br />
+                        <span>This will create a new entry using the information you've filled in.</span></li>
+                    </ol>
+                </dd>
+            </dl>
+            <dl>
+                <dt>Editing an Entry</dt>
+                <dd>You can edit an entry even if it is encrypted. But if it is encrypted, you can only see and edit the title and description.
+                Other then that, editing is the same as making a new entry; simply press the "Edit" button and change what you want.<br />
+                Note: it is currently not possible to edit an entry's password to be blank.
+                If the password and confirm feild are left blank, the entry's password doesn't change.</dd>
+            </dl>
+            <dl>
+                <dt>Selecting an Entry</dt>
+                <dd>The list of current entries is shown on the right side of the screen.
+                To select an entry, simply click it.</dd>
+            </dl>
+            <dl>
+                <dt>Sorting Entries</dt>
+                <dd>The list of current entries is shown on the right side of the screen.
+                To rearrange entries, you can drag then up and down with the mouse and place them where you like.</dd>
+            </dl>
+            <dl>
+                <dt>Deleting Entries</dt>
+                <dd>To delete an Entry, simply select the entry you want to delete, then press the "delete" button.<br />
+                Encrypted and decrypted entries can be deleted.
+                Once an entry is deleted it is gone for good, unless you've saved it to an external file.</dd>
+            </dl>
+            <dl>
+                <dt>Decrypting Entries</dt>
+                <dd>To decrypt an entry</dd>
+            </dl>
+            <dl>
+                <dt>Encrypting Entries</dt>
+                <dd></dd>
+            </dl>
+            <dl>
+                <dt>Automatic Saving</dt>
+                <dd></dd>
+            </dl>
+            <dl>
+                <dt>Save to File</dt>
+                <dd>Simply press "Save" and all the entries will be saved in their encrypted states to a text file.</dd>
+            </dl>
+            <dl>
+                <dt>Load from File</dt>
+                <dd>Simply press "Load" and select a previous save to load.<br />
+                Warning: this will overwrite all current entries with the newly loaded ones!</dd>
+            </dl>
+            <dl>
+                <dt>Changing the salt</dt>
+                <dd></dd>
+            </dl>
+            <hr />
+            <p>The Following is a light overview of cryptography</p>
+            <dl>
+                <dt>What is salt?</dt>
+                <dd></dd>
+            </dl>
+            <dl>
+                <dt>What is a Feistel Network?</dt>
+                <dd></dd>
+            </dl>
+        </div>
+    </body>
 </html>
