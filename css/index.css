@@ -103,20 +103,25 @@ body, input, button {font-size: 14pt;}
     background: #ddeef6;
     font-weight: bold;
     cursor: pointer;
-    position:relative;
+    position: relative;
     z-index: 1;
     opacity: 1;
     filter: alpha(opacity=100);
     top: 0px;
     left: 0px;}
 
+#lbox li button {
+    position: relative;
+    float: right;
+    font-size: 10pt;}
+
 #lbox ul .select {background: #afa;}
 
 #lbox ul #drag {
-  z-index: 100;
-  position: absolute;
-  opacity: .50;
-  filter: alpha(opacity=50);}
+    z-index: 100;
+    position: absolute;
+    opacity: .50;
+    filter: alpha(opacity=50);}
 
 .form {width: 100%;border-collapse: collapse;}
 .form td {text-align: center;}

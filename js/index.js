@@ -595,10 +595,12 @@ var list = {
             this.dragging.parentNode.replaceChild(this.dragging, this.placeholder);
 
             // re-order entryManager's entries to match dragged's new location
+            var changed = false;
             for (var i=0;i<this.lis.length;i++) {
-                if (this.lis[i].id == "drag") {
+                if (this.lis[i].id == "drag" && this.dragging.index != i) {
                     entryManager.entries.splice(this.dragging.index, 1);
                     entryManager.entries.splice(i, 0, this.dragging.entry);
+                    changed = true;
                 }
                 this.lis[i].index = i;
             }
@@ -611,7 +613,9 @@ var list = {
             this.dragging.select();
             this.dragging = null;
             this.placeholder = null;
-            entryManager.save();
+            if (changed) { // save if order was changed
+                entryManager.save();
+            }
         }
     }
 }
@@ -851,6 +855,7 @@ var buttons = {
         button.addEventListener("click", function () {
             entryManager.salt = document.getElementById("salt").value;
             entryManager.save();
+            display.current();
         }, false);
 
         body.appendChild(p);
