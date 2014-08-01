@@ -34,14 +34,18 @@
             <tr>
                 <th id="header">Feisty Pass</th>
                 <td class="lbox" rowspan="2">
+                    <button id="up">Move Up</button>
+                    <button id="down">Move Down</button>
                     <div id="lbox"><br /></div>
+                    <button id="in">Move Into</button>
+                    <button id="out">Move Out Of</button>
                 </td>
             </tr>
             <tr>
                 <td class="body">
                     <div id="body">
                         <p style="text-align: center;">Welcome To Feisty Pass, the password encryption app!</p>
-                        <p>Just getting started? It's strongly recommended you change a different salt in the config menu before beginning.</p>
+                        <p>Just getting started? It's strongly recommended you change a different salt in the Settings menu before beginning.</p>
                         <p>Learn more about Feisty Pass, salt, and encryption in general by seeing the help section.</p>
                     </div>
                 </td>
@@ -57,9 +61,9 @@
                             <td><button id="crypt">Decrypt</button></td>
                         </tr>
                         <tr>
-                            <td><button id="save">Save</button></td>
-                            <td><button id="load">Load</button></td>
-                            <td><button id="config" >Config</button></td>
+                            <td><button id="save">Save To File</button></td>
+                            <td><button id="load">Load From File</button></td>
+                            <td><button id="config" >Settings</button></td>
                             <td><button id="help">Help</button></td>
                         </tr>
                     </table>
@@ -121,16 +125,33 @@
                 Once an entry is deleted it is gone for good, unless you've saved it to an external file.</dd>
             </dl>
             <dl>
+                <dt>Moving Entries</dt>
+                <dd>Up Down In Out</dd>
+            </dl>
+            <dl>
                 <dt>Decrypting Entries</dt>
-                <dd>To decrypt an entry</dd>
+                <dd>To decrypt an entry, select the entry and press the Decrypt button.
+                This will bring up the decryption menu, which asks for a password.
+                Enter in the password for the selected entry and press Yes, this will attempt to decrypt the entry.
+                If Decryption failed, the entry will be displayed still encrypted, otherwise the entry will be displayed decrypted.<br />
+                If an entry is already decrypted, the Decrypt button will instead be the Encrypt button.</dd>
             </dl>
             <dl>
                 <dt>Encrypting Entries</dt>
-                <dd></dd>
+                <dd>To Encrypt an entry, select the entry and press the Encrypt button.<br />
+                If an entry is already encrypted, the Encrypt button will instead be the Decrypt button.</dd>
             </dl>
             <dl>
                 <dt>Automatic Saving</dt>
-                <dd></dd>
+                <dd>The following changes cause Feisty Pass to automatically save:
+                    <ul>
+                        <li>Creating a new entry</li>
+                        <li>Editing an existing entry</li>
+                        <li>Deleting</li>
+                        <li>Moving an entry</li>
+                        <li>Saving Settings</li>
+                    </ul>
+                </dd>
             </dl>
             <dl>
                 <dt>Save to File</dt>
@@ -161,7 +182,7 @@
             </dl>
             <dl>
                 <dt>What is a Feistel Network?</dt>
-                <dd><p>A Feistel Network is a key element of many encryption schemes. The steps a Feistel Netork performs are as follows:</p>
+                <dd><p>A Feistel Network is a key element of many encryption schemes, incliding Feisty Pass's. The steps a Feistel Netork performs are as follows:</p>
                 <table><tr>
                     <td>
                         <ol>

@@ -48,23 +48,82 @@ var entryManager = {
         this.save();
     },
 
-    // adds a new "entry" object and adds it to the list
-    "add" : function (entry, pass) {
-        this.entries.push(entry);
-        this.hashes.push(this.hash(pass));
-        this.save();
+    // finds the entry at the specified index and returns an object
+    // var ret = {
+    //     index : the index of the entry
+    //     entry : the entry itself
+    //     hash : the stored hash of the entry (may be null)
+    //     e_container : array that holds the entry
+    //     h_container : array that holds the hash of the entry
+    // }
+    // return null on failure
+    "get" : function (index) {
+        if (!(index instanceof Array) && !(this.index instanceof Array)) {
+            alert("return index not an Arry!");
+            return null;
+        }
+
+        index = index||this.index;
+        var e = this.entries;
+        var h = this.hashes;
+        var next = null;
+        try {
+            for (var i=0;i<index.length-1;i++) {
+                next = e[index[i]];
+                if (next && !next.encrypted) {
+                    e = next.secrets.entries;
+                    h = h[index[i]].sub;
+               } else {
+                    return null;
+                }
+            }
+            var ret = {
+                index : index,
+                entry : e[index[index.length-1]],
+                hash : h[index[index.length-1]],
+                e_container : e,
+                h_container : h
+            }
+            return ret;
+        } catch (e) {
+            var str = "index:" + index;
+            alert("Error! failed to find entry\n"+str);
+        }
+        return null;
+    },
+
+    // takes an "entry" object and inserts it into the specified spot
+    "insert" : function (index, entry, hash) {
+        // get current entry and its container
+        var e = this.get(index);
+        e.e_container.splice(e.index[e.index.length-1], 0, entry);
+        h.h_container.splice(e.index[e.index.length-1], 0, hash);
+        
+        // adjust current entry to account for changes in entry list
+        if (e.index.length <= this.index.length) {
+            // we only have to adjust if the deleted entry was before/is the current entry
+            for (var i=0;i<index.length-1;i++) {
+                if (e.index[i] != this.index[i]) {
+                    return;
+                }
+            }
+            if (e.index[e.index.length-1] <= this.index[e.index.length-1]) {
+                this.index[e.index.length-1]++;
+            }
+        }
     },
 
     // edits the current entry
     "edit" : function (title, desc, secret, pass) {
-        if (this.index > -1) {
-            var entry = this.entries[this.index];
+        var e = this.get();
+        if (e != null) {
+            var entry = e.entry;
             entry.title = title;
             entry.description = desc;
             if (!entry.encrypted) {
                 entry.secret = secret;
                 if (pass != null)
-                    this.hashes[this.index] = this.hash(pass);
+                    h[e.index[e.index.length-1]] = this.hash(pass);
             }
             this.save();
         } else {
@@ -72,54 +131,63 @@ var entryManager = {
         }
     },
 
-    // delete current entry
-    "delete" : function (index) {
-        if (index >= 0 && index < this.entries.length) {
-            // delete specified
-            this.entries.splice(index, 1);
-            this.hashes.splice(index, 1);
+    "remove" : function (index) {
+        var e = this.get(index);
+        e.e_container.splice(e.index[e.index.length-1], 1);
+        e.h_container.splice(e.index[e.index.length-1], 1);
 
-            // adjust current entry to account for changes in entry list
-            if (index == this.index) {
-                this.index = -1;
-            } else if (index < this.index) {
-                this.index--;
+        // adjust current entry to account for changes in entry list
+        if (e.index.length <= this.index.length) {
+            // we only have to adjust if the deleted entry was before/is the current entry
+            for (var i=0;i<e.index.length-1;i++) {
+                if (e.index[i] != this.index[i]) {
+                    return;
+                }
             }
-        } else if (index == null) {
-            // delete current
-            if (this.index > -1) {
-                this.entries.splice(this.index, 1);
-                this.hashes.splice(this.index, 1);
-                this.index = -1;
+            if (e.index[e.index.length-1] == this.index[e.index.length-1]) {
+                this.index = [];
+            } else if (e.index[e.index.length-1] < this.index[e.index.length-1]) {
+                this.index[e.index.length-1]--;
             }
         }
+    },
 
+    // delete entry
+    "delete" : function (index) {
+        // remove specifie
+        this.remove(index);
         this.save();
+    },
+
+    "move" : function (from, to) {
+        var e = this.get(index);
+        this.remove(from);
+        this.insert(to, e.entry, e.hash);
     },
 
     "feistel" : null,
 
     // encrypt secret section of current entry
-    "encrypt" : function (e, i, save) {
+    "encrypt" : function (index, save) {
         // use password's hash to encrypt
         // do not use the password directly as that would force it to be unsecure
-        if (e == null && i == null) {
-            if (this.index != -1) {
-                e = this.entries[this.index];
-                i = this.index;
-            } else {
-                return false;
-            }
-        }
-        if (i == null)
+        var e = this.get(index);
+        if (e == null)
             return false;
 
-        if (!e.encrypted) {
-            this.feistel.key = this.hashes[i];
-            e.secret = str2hex(this.feistel.encrypt(JSON.stringify(e.secret)));
-            e.encrypted = true;
+        if (!e.entry.encrypted) {
+            if (e.entry.secret.entries && e.entry.secret.entries.length > 0) {
+                var entries = e.entry.secret.entries;
+                for (var i=0;i<entries.length;i++) {
+                    this.encrypt(e.index.concat([i]), save);
+                }
+            }
+            this.feistel.key = e.hash;
+            e.entry.secret = str2hex(this.feistel.encrypt(
+                        JSON.stringify(e.entry.secret)));
+            e.entry.encrypted = true;
             if (save == null || save == false)
-                this.hashes[i] = null;
+                e.h_container[e.index[e.index.length-1]] = null;
             this.feistel.key = "";
             return true;
         }
@@ -127,30 +195,32 @@ var entryManager = {
     },
 
     // decrypt secret section of current entry
-    "decrypt" : function (pass, e, i, save) {
-        if (e == null) {
-            if (this.index != -1) {
-                e = this.entries[this.index];
-                i = this.index;
-            } else {
-                return false;
-            }
-        }
-
-        if (e.encrypted) {
-            if (save == null)
-                this.hashes[i] = this.hash(pass);
-            this.feistel.key = this.hashes[i];
-            var s = this.feistel.decrypt(hex2str(e.secret));
+    "decrypt" : function (pass, index, save) {
+        var e = this.get(index);
+        if (e && e.entry && e.entry.encrypted) {
+            if (save != true)
+                e.h_container[e.index[e.index.length-1]] = this.hash(pass);
+                
+            this.feistel.key = e.h_container[e.index[e.index.length-1]];
+            var s = this.feistel.decrypt(hex2str(e.entry.secret));
             if (s[0] == "{") {
-                e.secret = JSON.parse(s);
-                e.encrypted = false;
+                e.entry.secret = JSON.parse(s);
+                e.entry.encrypted = false;
+                if (e.entry.secret.entries) {
+                    e.h_container[e.index[e.index.length-1]].sub = new Array(entries.length);
+                }
+                var entries = e.entry.secret.entries||[];
+                for (var i=0;i<entries.length;i++) {
+                    this.decrypt(pass, e.index.concat([i]), save);
+                }
                 this.feistel.key = "";
                 return true;
             } else {
-                this.hashes[i] = null;
+                e.h_container[e.index[e.index.length-1]] = null;
                 return false;
             }
+        } else {
+            alert("invalid entry");
         }
         return false;
     },
@@ -161,7 +231,7 @@ var entryManager = {
             // first encrypt everything
             for (var i=0;i<this.hashes.length;i++)
                 if (this.hashes[i] != null)
-                    this.encrypt(this.entries[i], i, true);
+                    this.encrypt([i], true);
             
             // save to local storage
             window.localStorage.setItem('entries', JSON.stringify(this.entries));
@@ -170,7 +240,7 @@ var entryManager = {
             // decrypt everything that wasn't encrypted before save
             for (var i=0;i<this.hashes.length;i++)
                 if (this.hashes[i] != null)
-                    this.decrypt(null, this.entries[i], i, true);
+                    this.decrypt(null, [i], true);
         }
     },
 
@@ -264,7 +334,7 @@ var entryManager = {
         file.click();
     },
 
-    "index" : -1,
+    "index" : [],
     "entries" : [],
     "hashes" : [],
     "hash" : function (pass) {
@@ -273,10 +343,6 @@ var entryManager = {
         else
             return SHA512(this.salt);
     },
-
-    // idea for sub-indexing:
-    // an array starting with the entry in the main list,
-    // and then the next entry in the array is for the subentry of the previously selected entry
 }
 
 // provide helpful display functions
@@ -421,7 +487,7 @@ var display = {
 
 	// display an entry
     "entry" : function (e, index) {
-		// ery encrypted status
+		// entry encrypted status
         var encrypted = document.createElement("div");
         encrypted.innerHTML="<b>Status</b>: " + (e.encrypted?"Encrypted":"Decrypted");
         encrypted.setAttribute("class", "encrypted");
@@ -436,7 +502,7 @@ var display = {
 			// display secret entries
             secret = document.createElement("table");
             for (var i in e.secret) {
-                if (typeof e.secret[i] == "string") {
+                if (typeof e.secret[i] == "string" && i != "entries") {
                     var tr = document.createElement("tr");
                     var th = document.createElement("th");
                     var td = document.createElement("td");
@@ -454,10 +520,10 @@ var display = {
         }
         secret.setAttribute("class", "secret");
 
-        if (index >= 0) {
+        if (index) {
             entryManager.index = index;
         } else {
-            entryManager.index = -1;
+            entryManager.index = [];
         }
 
         this.byElements(e.title, [encrypted, description, secret]);
@@ -466,7 +532,8 @@ var display = {
 
 	// display current entry
     "current" : function () {
-        this.entry(entryManager.entries[entryManager.index], entryManager.index);
+        var e = entryManager.get();
+        this.entry(e.entry, e.index);
     }
 }
 
@@ -474,6 +541,10 @@ var display = {
 var list = {
     "init" : function () {
         this.lbox = document.getElementById("lbox");
+        this.up = document.getElementById("up");
+        this.down = document.getElementById("down");
+        this.in = document.getElementById("in");
+        this.out = document.getElementById("out");
 
         // add drag events to list
         this.lbox.addEventListener("mousemove", function (e) {
@@ -486,26 +557,37 @@ var list = {
 
     "lbox" : null,
     "ul" : null,
+    "selected" : null,
 
     "build" : function () {
-        var l = entryManager.entries;
-        this.ul = document.createElement("ul");
-
-        // build each list item
-        for (var i=0;i<l.length;i++) {
+        function ul (entries, index) {
+            var ul = document.createElement("ul");
+            for (var i=0;i<entries.length;i++) {
+                ul.appendChild(li(entries[i], index.concat([i])));
+            }
+            return ul;
+        }
+        function li (entry, index) {
             var li = document.createElement("li");
-            li.innerHTML = l[i].title;
-            li.entry = l[i];
-            li.index = i;
+            li.innerHTML = entry.title;
+            li.entry = entry;
+            li.index = index;
 
-            li.select = this.select;
-            li.start = this.dragStart;
+            li.select = list.select;
+            li.start = list.dragStart;
             li.addEventListener("mousedown", function (e) {
                 this.start(e.clientX, e.clientY);
             }, false);
 
-            this.ul.appendChild(li);
+            if (!entry.encrypted
+            && entry.secret.entries != null
+            && entry.secret.entries.length > 0) {
+                li.appendChild(ul(entry.secret.entries));
+            }
+            return li;
         }
+
+        this.ul = ul(entryManager.entries, []);
         var lis = this.ul.getElementsByTagName("li");
 
         // add list to page
@@ -513,9 +595,24 @@ var list = {
         this.lbox.appendChild(this.ul);
         
         // select list item matching current entry
-        if (entryManager.index >= 0) {
-            lis[entryManager.index].select();
+        if (entryManager.index.length > 0) {
+            this.get().select();
         }
+    },
+
+    "get" : function (index) {
+        index = index||entryManager.index;
+        var lis = this.ul.getElementsByTagName("li");
+        var li = null;
+        try {
+            for (var i=0;i<index.length-1;i++) {
+                li = lis[index[i]];
+                lis = li.getElementsByTagName("ul")[0].getElementsByTagName("li");
+            }
+            return lis[index[index.length-1]];
+        } catch (e) {
+        }
+        return null;
     },
 
     // select "this" entry
@@ -524,12 +621,25 @@ var list = {
         display.entry(this.entry, this.index);
         list.deselect();
         this.className = "select";
+        list.selected = this;
+
+        list.up.disabled = false;
+        list.down.disabled = false; 
+        list.in.disabled = false;
+        list.out.disabled = false;
     },
 
     "deselect" : function () {
         var lis = this.ul.getElementsByTagName("li");
+        this.selected = null;
         for (var i=0;i<lis.length;i++)
             lis[i].className = "";
+
+        this.up.disabled = true;
+        this.down.disabled = true;
+        this.in.disabled = true;
+        this.out.disabled = true;
+
     },
 
     "dragging" : null,
@@ -547,7 +657,7 @@ var list = {
 
             // change position of dragged element to absolite equivalent
             this.style.width = this.clientWidth + 'px';
-            this.style.top = (this.offsetTop-(this.clientHeight+2)) + 'px';
+            this.style.top = (this.offsetTop-(this.clientHeight+2)-list.lbox.scrollTop) + 'px';
             this.style.left = this.offsetLeft + 'px';
             this.setAttribute("id", "drag");
 
@@ -563,7 +673,7 @@ var list = {
             this.dragging.mouseY = e.clientY;
             
             // calculate location of dragged list item's center
-            var y = this.dragging.offsetTop+(this.dragging.clientHeight/2);
+            var y = this.dragging.offsetTop+(this.dragging.clientHeight/2)+this.lbox.scrollTop;
 
             // get list of list items other then placeholder and dragged items
             var l = [];
@@ -602,7 +712,7 @@ var list = {
                     entryManager.entries.splice(i, 0, this.dragging.entry);
                     changed = true;
                 }
-                this.lis[i].index = i;
+                this.lis[i].index = [i];
             }
 
             // clean drag attribute
@@ -617,6 +727,44 @@ var list = {
                 entryManager.save();
             }
         }
+    },
+
+    // moves the selected entry up one
+    "moveUp" : function () {
+        if (this.selected && this.selected.index != 0) {
+            var lis = list.ul.getElementsByTagName("li");
+            entryManager.entries[this.selected.index] = entryManager.entries[this.selected.index-1]
+            entryManager.entries[this.selected.index-1] = this.selected.entry;
+            lis[this.selected.index-1].index = this.selected.index;
+            this.selected.index--;
+            this.selected.parentNode.insertBefore(this.selected, lis[this.selected.index]);
+            entryManager.save();
+        }
+    },
+
+    // moves the selected entry down one
+    "moveDown" : function () {
+        var lis = list.ul.getElementsByTagName("li");
+        if (this.selected && this.selected.index < lis.length) {
+            entryManager.entries[this.selected.index] = entryManager.entries[this.selected.index+1]
+            entryManager.entries[this.selected.index+1] = this.selected.entry;
+            lis[this.selected.index+1].index = this.selected.index;
+            this.selected.index++;
+            if (this.selected.index != lis.length-1) {
+                this.selected.parentNode.insertBefore(this.selected, lis[this.selected.index+1]);
+            } else {
+                this.selected.parentNode.appendChild(this.selected);
+            }
+            entryManager.save();
+        }
+    },
+
+    // moves the selected entry inside the one above it
+    "moveIn" : function () {
+    },
+
+    // moves the selected entry out of it's containing entry
+    "moveOut" : function () {
     }
 }
 
@@ -624,7 +772,7 @@ var list = {
 var buttons = {
     // set up buttons
     "init" : function () {
-        var b = ["new", "edit", "delete", "crypt", "save", "load", "config", "help"];
+        var b = ["new", "edit", "delete", "crypt", "save", "load", "config", "help", "up", "down", "in", "out"];
         for (var i=0;i<b.length;i++) {
             this.dom[b[i]] = document.getElementById(b[i]);
             this.dom[b[i]].addEventListener("click", function () {
@@ -648,7 +796,7 @@ var buttons = {
     // builds/displays the "create new password entry" form
     "new" : function () {
         list.deselect();
-        entryManager.index = -1;
+        entryManager.index = [];
 
         var p = document.createElement("p");
         p.innerHTML = "Fill out the following form and press submit to create a new password entry:";
@@ -682,11 +830,13 @@ var buttons = {
             var count = document.getElementById("count").index;
             for (var i=0;i<count;i++) {
                 if (document.getElementById("k"+i)) {
-                    secret[document.getElementById("k"+i).value] = document.getElementById("v"+i).value;
+                    var key = document.getElementById("k"+i).value;
+                    key += (key=="entries")?":":""; // entries is reserved
+                    secret[key] = document.getElementById("v"+i).value;
                 }
             }
             entryManager["new"](title, desc, secret, pass1);
-            entryManager.index = entryManager.entries.length-1;
+            entryManager.index = [(entryManager.entries.length-1)];
             entryManager["encrypt"]();
             display.current();
             list.build();
@@ -698,14 +848,14 @@ var buttons = {
 
     // builds/displays the "edit current password entry" form
     "edit" : function () {
-        if (entryManager.index == -1) {
+        if (entryManager.index.length == 0) {
             display.byStrings("Error", "<p>Current entry could not be edited because the current entry could not be found.</p>");
             return;
         }
         var p = document.createElement("p");
         p.innerHTML = "Edit the following form and press submit to edit this password entry:";
 
-        var entry = entryManager.entries[entryManager.index];
+        var entry = entryManager.get().entry;
         var table = display.formTable(
                 entry.title, entry.description, entry.encrypted);
 
@@ -713,7 +863,9 @@ var buttons = {
         var button = table.getElementsByTagName("button")[0];
         if (!entry.encrypted) {
             for (var i in entry.secret) {
-                display.addRow(button, i, entry.secret[i]);
+                if (i != "entries") {
+                    display.addRow(button, i, entry.secret[i]);
+                }
             }
 
             button = document.createElement("button");
@@ -740,7 +892,9 @@ var buttons = {
                 var count = document.getElementById("count").index;
                 for (var i=0;i<count;i++) {
                     if (document.getElementById("k"+i)) {
-                        secret[document.getElementById("k"+i).value] = document.getElementById("v"+i).value;
+                        var key = document.getElementById("k"+i).value;
+                        key += (key=="entries")?":":""; // entries is reserved
+                        secret[key] = document.getElementById("v"+i).value;
                     }
                 }
                 entryManager["edit"](title, desc, secret, (pass1==""?null:pass1));
@@ -767,12 +921,12 @@ var buttons = {
 
     // promts the user to confirm entry deletion
     "delete" : function () {
-        if (entryManager.index == -1) {
+        if (entryManager.index.length == 0) {
             display.byStrings("Error", "<p>Current entry could not be deleted because the current entry could not be found.</p>");
             return;
         }
         if (confirm("Are you sure you want to delete this entry?\nOnce it's deleted, it's gone forever.")) {
-            entryManager.delete();
+            entryManager["delete"]();
             list.build();
             display.byStrings("Entry Deleted", "<div style='width: 100%; height: 100%; background: #ccc;'></div>");
         }
@@ -781,10 +935,11 @@ var buttons = {
 
     // displays the encrypt or decrypt form depending on which is called for
     "crypt" : function () {
-        if (entryManager.entries[entryManager.index].encrypted) {
+        var entry = entryManager.get().entry;
+        if (entry.encrypted) {
             this.decrypt();
         }
-        if (!entryManager.entries[entryManager.index].encrypted) {
+        if (!entry.encrypted) {
             this.encrypt();
         }
     },
@@ -801,7 +956,19 @@ var buttons = {
         h2.innerHTML = "Decrypt this Entry?";
 
         var p = document.createElement("p");
-        p.innerHTML = "Password: <input type=\"password\" id=\"password\"/>";
+        p.innerHTML = "Password: ";
+
+        var input = document.createElement("input");
+        input.setAttribute("type", "password");
+        input.setAttribute("id", "password");
+        input.addEventListener("keypress", function (e) {
+            var code = (e.keyCode ? e.keyCode : e.which);
+            if (code == 13) {
+                entryManager.decrypt(this.value);
+                display.current();
+            }
+        }, false);
+        p.appendChild(input);
 
         var yes = document.createElement("button");
         yes.innerHTML = "yes";
@@ -829,14 +996,31 @@ var buttons = {
         entryManager.fromFile();
     },
 
+    // move selected entry up
+    "up" : function () {
+        list.moveUp();
+    },
+
+    // move selected entry down
+    "down" : function () {
+        list.moveDown();
+    },
+
+    // move selected entry into the entry immediately above it
+    "in" : function () {
+        list.moveIn();
+    },
+
+    // move selected entry out of the entry containing it
+    "out" : function () {
+        list.moveOut();
+    },
+
     // build config page
     "config" : function () {
-        document.getElementById("header").innerHTML="Configuration";
+        document.getElementById("header").innerHTML="Settings";
         var body = document.getElementById("body");
         body.innerHTML = "";
-
-        var p = document.createElement("p");
-        p.innerHTML = "Configuration Options";
 
         var table = document.createElement("table");
         table.setAttribute("class", "form");
@@ -858,7 +1042,6 @@ var buttons = {
             display.current();
         }, false);
 
-        body.appendChild(p);
         body.appendChild(table);
         body.appendChild(button);
         this.state(false, false, false, null);
@@ -890,6 +1073,7 @@ function layout () {
     var head = document.getElementById("header");
     var body = document.getElementById("body");
     var lbox = document.getElementById("lbox");
+    var button = document.getElementsByTagName("button")[0];
 
 	for (var i=0;i<body.children.length;i++)
 		body.children[i].style.display = "none";
@@ -908,7 +1092,7 @@ function layout () {
     lbox.style.width ="";
     body.style.height=body.clientHeight+"px";
     body.style.width =body.clientWidth +"px";
-    lbox.style.height=lbox.clientHeight+"px";
+    lbox.style.height=(lbox.parentNode.clientHeight-2*(button.clientHeight)-10)+"px";
     lbox.style.width =lbox.clientWidth +"px";
 
 	for (var i=0;i<body.children.length;i++)
@@ -947,6 +1131,6 @@ window.addEventListener("load", function () {
     list.build();
     buttons.state(false, false, false, true);
     if (entryManager.entries.length > 0) {
-        list.ul.getElementsByTagName("li")[0].select();
+        list.get([0]).select();
     }
 }, false);
