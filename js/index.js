@@ -58,59 +58,94 @@ var entryManager = {
     // }
     // return null on failure
     "get" : function (index) {
+        index = index||this.index;
+        if (index.length > 0) {
+            var ret = this.getContainer(index);
+            var last = index[index.length-1]
+            ret.entry = ret.e_container[last];
+            if (!ret.entry.encrypted) {
+                ret.hash = ret.h_container[last];
+                if (!ret.hash)
+                    alert("null hash!" + JSON.stringify(index)
+                            + ", " + JSON.stringify(ret.h_container));
+            } else {
+                ret.hash = null;
+            }
+            return ret;
+        }
+        return null;
+    },
+
+    "getContainer" : function (index) {
         if (!(index instanceof Array) && !(this.index instanceof Array)) {
-            alert("return index not an Arry!");
+            alert("target index not an Arry!");
             return null;
         }
-
         index = index||this.index;
         var e = this.entries;
         var h = this.hashes;
         var next = null;
-        try {
+        //try {
             for (var i=0;i<index.length-1;i++) {
                 next = e[index[i]];
-                if (next && !next.encrypted) {
-                    e = next.secrets.entries;
-                    h = h[index[i]].sub;
-               } else {
+                if (!next) {
+                    alert("container entry null");
                     return null;
                 }
+                if (next.encrypted) {
+                    alert("container entry encrypted (" + i + ") ("
+                            + JSON.stringify(index) + ")");
+                    return null;
+                }
+                if (!next.secret.entries)
+                    next.secret.entries = [];
+                if (!h[index[i]].sub)
+                    h[index[i]].sub = [];
+                e = next.secret.entries;
+                h = h[index[i]].sub;
             }
             var ret = {
                 index : index,
-                entry : e[index[index.length-1]],
-                hash : h[index[index.length-1]],
                 e_container : e,
                 h_container : h
             }
             return ret;
-        } catch (e) {
-            var str = "index:" + index;
-            alert("Error! failed to find entry\n"+str);
-        }
+        /*} catch (e) {
+            var str = "index:" + JSON.stringify(index);
+            alert("Error! failed to find container\n"+str);
+        }*/
         return null;
     },
 
     // takes an "entry" object and inserts it into the specified spot
     "insert" : function (index, entry, hash) {
-        // get current entry and its container
-        var e = this.get(index);
-        e.e_container.splice(e.index[e.index.length-1], 0, entry);
-        h.h_container.splice(e.index[e.index.length-1], 0, hash);
+        var e = this.getContainer(index);
+        if (e == null)
+            return false;
+
+        var last = e.index[e.index.length-1];
+        if (last < e.e_container.length) {
+            e.e_container.splice(last, 0, entry);
+            e.h_container.splice(last, 0, hash);
+        } else {
+            e.e_container.push(entry);
+            e.h_container.push(hash);
+        }
         
         // adjust current entry to account for changes in entry list
         if (e.index.length <= this.index.length) {
-            // we only have to adjust if the deleted entry was before/is the current entry
+            // we only have to adjust if the inserted entry
+            // was before/is the current entry
             for (var i=0;i<index.length-1;i++) {
                 if (e.index[i] != this.index[i]) {
-                    return;
+                    return true;
                 }
             }
             if (e.index[e.index.length-1] <= this.index[e.index.length-1]) {
                 this.index[e.index.length-1]++;
             }
         }
+        return true;
     },
 
     // edits the current entry
@@ -133,15 +168,20 @@ var entryManager = {
 
     "remove" : function (index) {
         var e = this.get(index);
-        e.e_container.splice(e.index[e.index.length-1], 1);
-        e.h_container.splice(e.index[e.index.length-1], 1);
+        if (e == null)
+            return false;
+
+        var last = e.index[e.index.length-1];
+        e.e_container.splice(last, 1);
+        e.h_container.splice(last, 1);
 
         // adjust current entry to account for changes in entry list
         if (e.index.length <= this.index.length) {
-            // we only have to adjust if the deleted entry was before/is the current entry
+            // we only have to adjust if the removed entry
+            // was before/is the current entry
             for (var i=0;i<e.index.length-1;i++) {
                 if (e.index[i] != this.index[i]) {
-                    return;
+                    return true;
                 }
             }
             if (e.index[e.index.length-1] == this.index[e.index.length-1]) {
@@ -150,6 +190,7 @@ var entryManager = {
                 this.index[e.index.length-1]--;
             }
         }
+        return true;
     },
 
     // delete entry
@@ -160,9 +201,63 @@ var entryManager = {
     },
 
     "move" : function (from, to) {
-        var e = this.get(index);
-        this.remove(from);
-        this.insert(to, e.entry, e.hash);
+        var index = this.index.slice(0);
+        var flast = from[from.length-1];
+        var tlast = to[to.length-1];
+
+        // check if they're from the same container
+        if (from.length == to.length) {
+            var sameContainer = true
+            for (var i=0;i<from.length-1;i++) {
+                if (from[i] != to[i]) {
+                    sameContainer = false;
+                    break;
+                }
+            }
+            if (sameContainer) {
+                if (flast == tlast) {
+                    alert("moved to same location!\n"
+                    +" from: " + JSON.stringify(from)
+                    +" to: " + JSON.stringify(to)
+                    +" flast: " + flast
+                    +" tlast: " + tlast);
+                    return true;
+                    // move was successful because
+                    // object was moving to where it was already location
+                }
+            }
+        }
+        var e = this.get(from);
+        var c = this.getContainer(to);
+        if (e == null) {
+            alert("error! Could not find entry to be moved");
+            return false;
+        }
+        if (c == null) {
+            alert("error! Could not find destination");
+            return false;
+        }
+        if (c.e_container == null) {
+            alert("error! Destination does not exist");
+            alert("error! ");
+            return false;
+        }
+
+        if (!this.remove(from)) {
+            alert("error!");
+            return false;
+        }
+
+        if (!this.insert(to, e.entry, e.hash)) {
+            alert("error! entry was mistakenly deleted instead! Close Feisty Pass to prevent this change from being saved");
+            return false;
+        }
+        this.save();
+
+        if (index == from)
+            this.index = to;
+
+        return true;
     },
 
     "feistel" : null,
@@ -170,24 +265,31 @@ var entryManager = {
     // encrypt secret section of current entry
     "encrypt" : function (index, save) {
         // use password's hash to encrypt
-        // do not use the password directly as that would force it to be unsecure
+        // do not use the password directly!
+        // direct use would mean we're saving unencrypted passwords somewhere
         var e = this.get(index);
         if (e == null)
             return false;
 
         if (!e.entry.encrypted) {
+            var last = e.index[e.index.length-1];
             if (e.entry.secret.entries && e.entry.secret.entries.length > 0) {
                 var entries = e.entry.secret.entries;
                 for (var i=0;i<entries.length;i++) {
                     this.encrypt(e.index.concat([i]), save);
                 }
             }
-            this.feistel.key = e.hash;
+
+            if (!e.hash) {
+                throw Error("Unable to Encrypt: null hash\n"
+                        +"(This shouldn't happen, but try Setting a new Password for this entry to fix this error)");
+            }
+            this.feistel.key = e.hash.hash;
             e.entry.secret = str2hex(this.feistel.encrypt(
                         JSON.stringify(e.entry.secret)));
             e.entry.encrypted = true;
             if (save == null || save == false)
-                e.h_container[e.index[e.index.length-1]] = null;
+                e.h_container[last] = null;
             this.feistel.key = "";
             return true;
         }
@@ -198,16 +300,18 @@ var entryManager = {
     "decrypt" : function (pass, index, save) {
         var e = this.get(index);
         if (e && e.entry && e.entry.encrypted) {
+            var last = e.index[e.index.length-1];
             if (save != true)
-                e.h_container[e.index[e.index.length-1]] = this.hash(pass);
-                
-            this.feistel.key = e.h_container[e.index[e.index.length-1]];
+                e.h_container[last] = this.hash(pass);
+            
+            this.feistel.key = e.h_container[last].hash;
             var s = this.feistel.decrypt(hex2str(e.entry.secret));
             if (s[0] == "{") {
                 e.entry.secret = JSON.parse(s);
                 e.entry.encrypted = false;
                 if (e.entry.secret.entries) {
-                    e.h_container[e.index[e.index.length-1]].sub = new Array(entries.length);
+                    e.h_container[e.index[last]].sub = 
+                        new Array(e.entry.secret.entries.length);
                 }
                 var entries = e.entry.secret.entries||[];
                 for (var i=0;i<entries.length;i++) {
@@ -216,7 +320,7 @@ var entryManager = {
                 this.feistel.key = "";
                 return true;
             } else {
-                e.h_container[e.index[e.index.length-1]] = null;
+                e.h_container[last] = null;
                 return false;
             }
         } else {
@@ -247,7 +351,8 @@ var entryManager = {
     // load entries from JSON strings
     "load" : function () {
 		try {
-        	if (typeof window.localStorage != "undefined" && typeof JSON != "undefined") {
+        	if (typeof window.localStorage != "undefined"
+            && typeof JSON != "undefined") {
     	        var state = JSON.parse(window.localStorage.getItem('entries'));
 	            if (state != null) {
                 	this.entries = state;
@@ -285,10 +390,12 @@ var entryManager = {
         };
         var blob = new Blob([JSON.stringify(save)], {type:'text/plain'});
         var downloadLink = document.createElement("a"); 
-        downloadLink.download = "feistypass" + (new Date()).toJSON().substr(0, 10) + ".txt";
+        downloadLink.download = "feistypass"
+            + (new Date()).toJSON().substr(0, 10) + ".txt";
         downloadLink.innerHTML = "<br />save as text file";
         downloadLink.href = window.URL.createObjectURL(blob);
-        downloadLink.onclick = function (event) {document.body.removeChild(event.target);};
+        downloadLink.onclick = function (event) {
+            document.body.removeChild(event.target);};
         downloadLink.style.display = "none";
         document.body.appendChild(downloadLink);
         downloadLink.click();
@@ -339,9 +446,13 @@ var entryManager = {
     "hashes" : [],
     "hash" : function (pass) {
         if (typeof pass == "string")
-            return SHA512(this.salt+pass);
+            return {
+                sub : [],
+                hash : SHA512(this.salt+pass)};
         else
-            return SHA512(this.salt);
+            return {
+                sub : [],
+                hash : SHA512(this.salt)};
     },
 }
 
@@ -705,12 +816,12 @@ var list = {
             this.dragging.parentNode.replaceChild(this.dragging, this.placeholder);
 
             // re-order entryManager's entries to match dragged's new location
-            var changed = false;
             for (var i=0;i<this.lis.length;i++) {
                 if (this.lis[i].id == "drag" && this.dragging.index != i) {
-                    entryManager.entries.splice(this.dragging.index, 1);
-                    entryManager.entries.splice(i, 0, this.dragging.entry);
-                    changed = true;
+                    var to = this.dragging.index.slice(0);
+                    to.pop();
+                    to.push(i);
+                    entryManager.move(this.dragging.index, to);
                 }
                 this.lis[i].index = [i];
             }
@@ -723,48 +834,95 @@ var list = {
             this.dragging.select();
             this.dragging = null;
             this.placeholder = null;
-            if (changed) { // save if order was changed
-                entryManager.save();
-            }
         }
     },
 
     // moves the selected entry up one
     "moveUp" : function () {
-        if (this.selected && this.selected.index != 0) {
-            var lis = list.ul.getElementsByTagName("li");
-            entryManager.entries[this.selected.index] = entryManager.entries[this.selected.index-1]
-            entryManager.entries[this.selected.index-1] = this.selected.entry;
-            lis[this.selected.index-1].index = this.selected.index;
-            this.selected.index--;
-            this.selected.parentNode.insertBefore(this.selected, lis[this.selected.index]);
-            entryManager.save();
+        if (this.selected) {
+            var s = this.selected;
+            var lis = s.parentNode.getElementsByTagName("li");
+            var last = s.index[s.index.length-1];
+
+            if (last != 0) {
+                // entry manager move
+                var from = s.index;
+                var to = s.index.slice(0);
+                to.push(to.pop()-1);
+                entryManager.move(from, to);
+
+                // list move
+                lis[s.index-1].index = s.index;
+                s.index[s.index.length-1]--;
+                s.parentNode.insertBefore(s, lis[s.index]);
+            }
         }
     },
 
     // moves the selected entry down one
     "moveDown" : function () {
-        var lis = list.ul.getElementsByTagName("li");
-        if (this.selected && this.selected.index < lis.length) {
-            entryManager.entries[this.selected.index] = entryManager.entries[this.selected.index+1]
-            entryManager.entries[this.selected.index+1] = this.selected.entry;
-            lis[this.selected.index+1].index = this.selected.index;
-            this.selected.index++;
-            if (this.selected.index != lis.length-1) {
-                this.selected.parentNode.insertBefore(this.selected, lis[this.selected.index+1]);
-            } else {
-                this.selected.parentNode.appendChild(this.selected);
+        if (this.selected) {
+            var s = this.selected;
+            var lis = s.parentNode.getElementsByTagName("li");
+            var last = s.index[s.index.length-1];
+
+            if (last < lis.length-1) {
+                // entry manager move
+                var from = s.index;
+                var to = s.index.slice(0);
+                to.push(to.pop()+1);
+                entryManager.move(from, to);
+
+                // list move
+                lis[last+1].index = s.index;
+                s.index[s.index.length-1]++;
+                if (last != lis.length-1) {
+                    s.parentNode.insertBefore(s, lis[last+2]);
+                } else {
+                    s.parentNode.appendChild(s);
+                }
             }
-            entryManager.save();
         }
     },
 
     // moves the selected entry inside the one above it
     "moveIn" : function () {
+        // if there is a selected list item
+        // and it is not the first item of a list
+        if (this.selected) {
+            var s = this.selected;
+            var last = s.index[s.index.length-1];
+
+            if (last != 0) {
+                var from = s.index;
+                var to = from.slice(0);
+                to.push(to.pop()-1);
+                to.push(0);
+                entryManager.move(from, to);
+                this.build();
+            } else {
+                alert("no entry above this to enter");
+            }
+        } else {
+            alert("selected undefined");
+        }
     },
 
     // moves the selected entry out of it's containing entry
     "moveOut" : function () {
+        // if there is a selected list item
+        // and it is within another list item
+        if (this.selected) {
+            var s = this.selected;
+            var last = s.index[s.index.length-1];
+            
+            if (s.index.length > 1) {
+                var from = this.selected.index;
+                var to = from.slice(0);
+                to.push(to.pop()+1);
+                entryManager.move(from, to);
+            }
+        }
     }
 }
 
@@ -785,7 +943,6 @@ var buttons = {
         "new" : null,
         "edit" : null,
         "delete" : null,
-        "crypt" : null,
         "crypt" : null,
         "save" : null,
         "load" : null,
@@ -1008,12 +1165,18 @@ var buttons = {
 
     // move selected entry into the entry immediately above it
     "in" : function () {
-        list.moveIn();
+        if(list.moveIn()) {
+            list.build();
+            entryManager.save();
+        }
     },
 
     // move selected entry out of the entry containing it
     "out" : function () {
-        list.moveOut();
+        if (list.moveOut()) {
+            list.build();
+            entryManager.save();
+        }
     },
 
     // build config page
@@ -1024,6 +1187,7 @@ var buttons = {
 
         var table = document.createElement("table");
         table.setAttribute("class", "form");
+        // salt
         var tr = document.createElement("tr");
         var th = document.createElement("th");
         var td = document.createElement("td");
@@ -1032,6 +1196,60 @@ var buttons = {
         tr.appendChild(th);
         tr.appendChild(td);
         table.appendChild(tr);
+
+        // save
+        var tr = document.createElement("tr");
+        var th = document.createElement("th");
+        var td = document.createElement("td");
+        th.innerHTML = "Save on Edit";
+        td.innerHTML = '<input id="saveedit" type="checkbox" checked />';
+        tr.appendChild(th);
+        tr.appendChild(td);
+        table.appendChild(tr);
+        
+        var tr = document.createElement("tr");
+        var th = document.createElement("th");
+        var td = document.createElement("td");
+        th.innerHTML = "Save on New";
+        td.innerHTML = '<input id="savenew" type="checkbox" checked />';
+        tr.appendChild(th);
+        tr.appendChild(td);
+        table.appendChild(tr);
+
+        var tr = document.createElement("tr");
+        var th = document.createElement("th");
+        var td = document.createElement("td");
+        th.innerHTML = "Save on Delet";
+        td.innerHTML = '<input id="savedelete" type="checkbox" checked />';
+        tr.appendChild(th);
+        tr.appendChild(td);
+        table.appendChild(tr);
+         
+        var tr = document.createElement("tr");
+        var th = document.createElement("th");
+        var td = document.createElement("td");
+        th.innerHTML = "Save on Move";
+        td.innerHTML = '<input id="savemove" type="checkbox" checked />';
+        tr.appendChild(th);
+        tr.appendChild(td);
+        table.appendChild(tr);
+
+        /* Think of better working for this.
+         * We're trying to describe how the save feature converts decrypted
+         * entries that have a hash value saved from earlier decryption back
+         * into encrypted entries, saves, then redecrypts the decrypted
+         * entries. It does this so that saves never have decrypted entries in
+         * them, but unchecking this would enable decrypted entries to be saved
+         * unencrypted.
+         * I'm not sure I want this feature to be an option even
+        var tr = document.createElement("tr");
+        var th = document.createElement("th");
+        var td = document.createElement("td");
+        th.innerHTML = "Encrypt Entries on Save";
+        td.innerHTML = '<input id="saven" type="checkbox" checked />';
+        tr.appendChild(th);
+        tr.appendChild(td);
+        table.appendChild(tr);*/
 
         var button = document.createElement("button");
         button.setAttribute("class", "submit");
