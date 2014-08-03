@@ -27,10 +27,7 @@ var entryManager = {
 
     // creates a new "entry" object
     "create" : function (title, desc, secret) {
-        var entry = {
-            "title" : title,
-            "description" : desc,
-        };
+        var entry = {"title" : title, "description" : desc};
         if (typeof secret == "string") {
             entry.encrypted = true;
             entry.secret = secret;
@@ -62,6 +59,7 @@ var entryManager = {
         if (index.length > 0) {
             var ret = this.getContainer(index);
             var last = index[index.length-1]
+
             ret.entry = ret.e_container[last];
             if (!ret.entry.encrypted) {
                 ret.hash = ret.h_container[last];
@@ -157,8 +155,9 @@ var entryManager = {
             entry.description = desc;
             if (!entry.encrypted) {
                 entry.secret = secret;
-                if (pass != null)
-                    h[e.index[e.index.length-1]] = this.hash(pass);
+                if (pass != null) {
+                    e.h_container[e.index[e.index.length-1]] = this.hash(pass);
+                }
             }
             this.save();
         } else {
@@ -184,9 +183,9 @@ var entryManager = {
                     return true;
                 }
             }
-            if (e.index[e.index.length-1] == this.index[e.index.length-1]) {
+            if (last == this.index[e.index.length-1]) {
                 this.index = [];
-            } else if (e.index[e.index.length-1] < this.index[e.index.length-1]) {
+            } else if (last < this.index[e.index.length-1]) {
                 this.index[e.index.length-1]--;
             }
         }
@@ -216,11 +215,6 @@ var entryManager = {
             }
             if (sameContainer) {
                 if (flast == tlast) {
-                    alert("moved to same location!\n"
-                    +" from: " + JSON.stringify(from)
-                    +" to: " + JSON.stringify(to)
-                    +" flast: " + flast
-                    +" tlast: " + tlast);
                     return true;
                     // move was successful because
                     // object was moving to where it was already location
@@ -304,7 +298,11 @@ var entryManager = {
             if (save != true)
                 e.h_container[last] = this.hash(pass);
             
-            this.feistel.key = e.h_container[last].hash;
+            if (e.h_container && e.h_container[last] && e.h_container[last].hash)
+                this.feistel.key = e.h_container[last].hash;
+            else
+                alert("decryption failed for "+JSON.stringify(e.index));
+
             var s = this.feistel.decrypt(hex2str(e.entry.secret));
             if (s[0] == "{") {
                 e.entry.secret = JSON.parse(s);
@@ -314,9 +312,11 @@ var entryManager = {
                         new Array(e.entry.secret.entries.length);
                 }
                 var entries = e.entry.secret.entries||[];
-                for (var i=0;i<entries.length;i++) {
-                    this.decrypt(pass, e.index.concat([i]), save);
-                }
+                // try to decrypt subentries with same password
+                // commented out because it's too slow
+                //for (var i=0;i<entries.length;i++) {
+                //    this.decrypt(pass, e.index.concat([i]), save);
+                //}
                 this.feistel.key = "";
                 return true;
             } else {
@@ -673,6 +673,7 @@ var list = {
     "build" : function () {
         function ul (entries, index) {
             var ul = document.createElement("ul");
+            ul.lis = [];
             for (var i=0;i<entries.length;i++) {
                 ul.appendChild(li(entries[i], index.concat([i])));
             }
@@ -689,12 +690,14 @@ var list = {
             li.addEventListener("mousedown", function (e) {
                 this.start(e.clientX, e.clientY);
             }, false);
-
-            if (!entry.encrypted
-            && entry.secret.entries != null
-            && entry.secret.entries.length > 0) {
-                li.appendChild(ul(entry.secret.entries));
+            li.build = function () {
+                if (!this.entry.encrypted
+                && this.entry.secret.entries
+                && this.entry.secret.entries.length > 0) {
+                    li.appendChild(ul(this.entry.secret.entries, this.index));
+                }
             }
+            li.build();
             return li;
         }
 
@@ -762,13 +765,14 @@ var list = {
             list.placeholder = document.createElement("li");
             list.placeholder.setAttribute("id", "placeholder");
             list.placeholder.style.background = "#eee";
-            list.placeholder.style.height = (this.clientHeight-10)+"px"; //-10 for padding
+            list.placeholder.style.height = (this.clientHeight-10)+"px";
             this.parentNode.insertBefore(list.placeholder, this);
-            list.lis = list.ul.getElementsByTagName("li");
+            list.lis = this.parentNode.getElementsByTagName("li");
 
             // change position of dragged element to absolite equivalent
             this.style.width = this.clientWidth + 'px';
-            this.style.top = (this.offsetTop-(this.clientHeight+2)-list.lbox.scrollTop) + 'px';
+            this.style.top = (this.offsetTop-(this.clientHeight+2)
+                           - list.lbox.scrollTop) + 'px';
             this.style.left = this.offsetLeft + 'px';
             this.setAttribute("id", "drag");
 
@@ -784,7 +788,8 @@ var list = {
             this.dragging.mouseY = e.clientY;
             
             // calculate location of dragged list item's center
-            var y = this.dragging.offsetTop+(this.dragging.clientHeight/2)+this.lbox.scrollTop;
+            var y = this.dragging.offsetTop
+                  +(this.dragging.clientHeight/2)+this.lbox.scrollTop;
 
             // get list of list items other then placeholder and dragged items
             var l = [];
@@ -823,7 +828,8 @@ var list = {
                     to.push(i);
                     entryManager.move(this.dragging.index, to);
                 }
-                this.lis[i].index = [i];
+                this.lis[i].index.pop();
+                this.lis[i].index.push(i);
             }
 
             // clean drag attribute
@@ -914,13 +920,13 @@ var list = {
         // and it is within another list item
         if (this.selected) {
             var s = this.selected;
-            var last = s.index[s.index.length-1];
-            
             if (s.index.length > 1) {
-                var from = this.selected.index;
+                var from = s.index;
                 var to = from.slice(0);
+                to.pop();
                 to.push(to.pop()+1);
                 entryManager.move(from, to);
+                this.build();
             }
         }
     }
@@ -1016,7 +1022,6 @@ var buttons = {
         var table = display.formTable(
                 entry.title, entry.description, entry.encrypted);
 
-
         var button = table.getElementsByTagName("button")[0];
         if (!entry.encrypted) {
             for (var i in entry.secret) {
@@ -1086,8 +1091,11 @@ var buttons = {
             entryManager["delete"]();
             list.build();
             display.byStrings("Entry Deleted", "<div style='width: 100%; height: 100%; background: #ccc;'></div>");
+            this.state(false, false, false, null);
+        } else {
+            display.current();
+            this.state(true, true, true, null);
         }
-        this.state(false, false, false, null);
     },
 
     // displays the encrypt or decrypt form depending on which is called for
@@ -1105,6 +1113,7 @@ var buttons = {
     "encrypt" : function () {
         entryManager.encrypt();
         display.current();
+        list.build();
     },
 
     // builds/displays the "decrypt current password entry" form
@@ -1123,6 +1132,7 @@ var buttons = {
             if (code == 13) {
                 entryManager.decrypt(this.value);
                 display.current();
+                list.build();
             }
         }, false);
         p.appendChild(input);
@@ -1169,6 +1179,7 @@ var buttons = {
             list.build();
             entryManager.save();
         }
+        document.getElementById("body").innerHTML = JSON.stringify(entryManager.entries[0]);
     },
 
     // move selected entry out of the entry containing it
@@ -1234,22 +1245,23 @@ var buttons = {
         tr.appendChild(td);
         table.appendChild(tr);
 
-        /* Think of better working for this.
-         * We're trying to describe how the save feature converts decrypted
-         * entries that have a hash value saved from earlier decryption back
-         * into encrypted entries, saves, then redecrypts the decrypted
-         * entries. It does this so that saves never have decrypted entries in
-         * them, but unchecking this would enable decrypted entries to be saved
-         * unencrypted.
-         * I'm not sure I want this feature to be an option even
         var tr = document.createElement("tr");
         var th = document.createElement("th");
         var td = document.createElement("td");
-        th.innerHTML = "Encrypt Entries on Save";
-        td.innerHTML = '<input id="saven" type="checkbox" checked />';
+        th.innerHTML = "Encrypt on Edit";
+        td.innerHTML = '<input id="enedit" type="checkbox" checked />';
         tr.appendChild(th);
         tr.appendChild(td);
-        table.appendChild(tr);*/
+        table.appendChild(tr);
+
+        var tr = document.createElement("tr");
+        var th = document.createElement("th");
+        var td = document.createElement("td");
+        th.innerHTML = "Encrypt on New";
+        td.innerHTML = '<input id="ennew" type="checkbox" checked />';
+        tr.appendChild(th);
+        tr.appendChild(td);
+        table.appendChild(tr);
 
         var button = document.createElement("button");
         button.setAttribute("class", "submit");
@@ -1262,7 +1274,7 @@ var buttons = {
 
         body.appendChild(table);
         body.appendChild(button);
-        this.state(false, false, false, null);
+        //this.state(false, false, false, null);
     },
 
     // display help information
