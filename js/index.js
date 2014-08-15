@@ -467,6 +467,7 @@ var entryManager = {
         "saveMove" : true,
         "enNew" : true,
         "enEdit" : true,
+        "randPasses" : true,
     },
     // generate a random 8 character password string
     // I have no idea what I'm doing
@@ -1052,7 +1053,10 @@ var buttons = {
         var table = display.formTable();
         var button = table.getElementsByTagName("button")[0];
         display.addRow(button, "Username");
-        display.addRow(button, "Password", entryManager.random());
+        if (entryManager.config.randPasses)
+            display.addRow(button, "Password", entryManager.random());
+        else
+            display.addRow(button, "Password");
 
         button = document.createElement("button");
         button.innerHTML = "Create New Entry";
@@ -1295,6 +1299,7 @@ var buttons = {
         checkbox("Save on Move", "savemove", c.saveMove);
         checkbox("Encrypt on Edit", "enedit", c.enEdit);
         checkbox("Encrypt on New", "ennew", c.enNew);
+        checkbox("Generate Random Passwords", "rp", c.randPasses);
         
         var button = document.createElement("button");
         button.setAttribute("class", "submit");
@@ -1314,6 +1319,8 @@ var buttons = {
                 document.getElementById("enedit").checked;
             entryManager.config.enNew =
                 document.getElementById("ennew").checked;
+            entryManager.config.randPasses =
+                document.getElementById("rp").checked;
             entryManager.save();
             display.current();
         }, false);
