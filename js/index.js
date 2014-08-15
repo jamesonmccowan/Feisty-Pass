@@ -42,7 +42,11 @@ var entryManager = {
     "new" : function (title, desc, secret, pass) {
         this.entries.push(this.create(title, desc, secret));
         this.hashes.push(this.hash(pass));
-        this.save();
+        this.index = [this.entries.length-1];
+        if (this.config.enNew)
+            this.encrypt();
+        if (this.config.saveNew)
+            this.save();
     },
 
     // finds the entry at the specified index and returns an object
@@ -60,6 +64,7 @@ var entryManager = {
             var ret = this.getContainer(index);
             var last = index[index.length-1]
 
+            try {
             ret.entry = ret.e_container[last];
             if (!ret.entry.encrypted) {
                 ret.hash = ret.h_container[last];
@@ -68,6 +73,10 @@ var entryManager = {
                             + ", " + JSON.stringify(ret.h_container));
             } else {
                 ret.hash = null;
+            }
+            } catch (e) {
+                alert ("error! " + last);
+                throw e;
             }
             return ret;
         }
@@ -83,36 +92,30 @@ var entryManager = {
         var e = this.entries;
         var h = this.hashes;
         var next = null;
-        //try {
-            for (var i=0;i<index.length-1;i++) {
-                next = e[index[i]];
-                if (!next) {
-                    alert("container entry null");
-                    return null;
-                }
-                if (next.encrypted) {
-                    alert("container entry encrypted (" + i + ") ("
-                            + JSON.stringify(index) + ")");
-                    return null;
-                }
-                if (!next.secret.entries)
-                    next.secret.entries = [];
-                if (!h[index[i]].sub)
-                    h[index[i]].sub = [];
-                e = next.secret.entries;
-                h = h[index[i]].sub;
+        for (var i=0;i<index.length-1;i++) {
+            next = e[index[i]];
+            if (!next) {
+                alert("container entry null");
+                return null;
             }
-            var ret = {
-                index : index,
-                e_container : e,
-                h_container : h
+            if (next.encrypted) {
+                alert("container entry encrypted (" + i + ") ("
+                        + JSON.stringify(index) + ")");
+                return null;
             }
-            return ret;
-        /*} catch (e) {
-            var str = "index:" + JSON.stringify(index);
-            alert("Error! failed to find container\n"+str);
-        }*/
-        return null;
+            if (!next.secret.entries)
+                next.secret.entries = [];
+            if (!h[index[i]].sub)
+                h[index[i]].sub = [];
+            e = next.secret.entries;
+            h = h[index[i]].sub;
+        }
+        var ret = {
+            index : index,
+            e_container : e,
+            h_container : h
+        }
+        return ret;
     },
 
     // takes an "entry" object and inserts it into the specified spot
@@ -159,7 +162,10 @@ var entryManager = {
                     e.h_container[e.index[e.index.length-1]] = this.hash(pass);
                 }
             }
-            this.save();
+            if (this.config.enEdit)
+                this.encrypt();
+            if (this.config.saveEdit)
+                this.save();
         } else {
             alert ("Error: Could not edit entry because no entry is selected");
         }
@@ -196,7 +202,8 @@ var entryManager = {
     "delete" : function (index) {
         // remove specifie
         this.remove(index);
-        this.save();
+        if (this.config.saveDelete)
+            this.save();
     },
 
     "move" : function (from, to) {
@@ -238,7 +245,7 @@ var entryManager = {
         }
 
         if (!this.remove(from)) {
-            alert("error!");
+            alert("error! couldn't remove entry to place it somewhere else");
             return false;
         }
 
@@ -246,9 +253,10 @@ var entryManager = {
             alert("error! entry was mistakenly deleted instead! Close Feisty Pass to prevent this change from being saved");
             return false;
         }
-        this.save();
+        if (this.config.saveMove)
+            this.save();
 
-        if (index == from)
+        if (JSON.stringify(index) == JSON.stringify(from))
             this.index = to;
 
         return true;
@@ -339,7 +347,7 @@ var entryManager = {
             
             // save to local storage
             window.localStorage.setItem('entries', JSON.stringify(this.entries));
-            window.localStorage.setItem('salt', this.salt);
+            window.localStorage.setItem('config', JSON.stringify(this.config));
 
             // decrypt everything that wasn't encrypted before save
             for (var i=0;i<this.hashes.length;i++)
@@ -362,12 +370,9 @@ var entryManager = {
     	            }
 	            }
 
-            	var salt = window.localStorage.getItem('salt');
-        	    if (salt != null) {
-    	            this.salt = salt;
-	            } else {
-                	this.salt = "thinkOfABetterSalt";
-            	}
+            	var config = JSON.parse(window.localStorage.getItem('config'));
+        	    if (config != null)
+    	            this.config = config;
         	} else {
 				alert("Error: localStorage not found");
 			}
@@ -386,7 +391,7 @@ var entryManager = {
         // save to local storage
         var save = {
             "entries" : this.entries,
-            "salt" : this.salt
+            "config" : this.config
         };
         var blob = new Blob([JSON.stringify(save)], {type:'text/plain'});
         var downloadLink = document.createElement("a"); 
@@ -424,11 +429,10 @@ var entryManager = {
     	            }
 	            }
 
-        	    if (state.salt != null) {
-    	            entryManager.salt = state.salt;
+        	    if (state.config != null) {
+    	            entryManager.config = state.config;
 	            }
                 list.build();
-                buttons.state(false, false, false, true);
                 if (entryManager.entries.length > 0) {
                     list.ul.getElementsByTagName("li")[0].select();
                 }
@@ -448,12 +452,21 @@ var entryManager = {
         if (typeof pass == "string")
             return {
                 sub : [],
-                hash : SHA512(this.salt+pass)};
+                hash : SHA512(this.config.salt+pass)};
         else
             return {
                 sub : [],
-                hash : SHA512(this.salt)};
+                hash : SHA512(this.config.salt)};
     },
+    "config" : {
+        "salt" : "thinkOfABetterSalt",
+        "saveEdit" : true,
+        "saveNew" : true,
+        "saveDelete" : true,
+        "saveMove" : true,
+        "enEdit" : true,
+        "enNew" : true,
+    }
 }
 
 // provide helpful display functions
@@ -464,9 +477,11 @@ var display = {
     },
     "header" : null,
     "body" : null,
+    "move" : null,
 
     // set the display's content by a header and body string
     "byStrings" : function (header, body) {
+        this.move = null;
         if (header != null) {
             this.header.innerHTML = header;
         }
@@ -477,6 +492,7 @@ var display = {
 
     // set the display's content by a header string and an array of dom elements to append to the body
     "byElements" : function (header, list) {
+        this.move = null;
         if (header != null) {
             this.header.innerHTML = header;
         }
@@ -493,11 +509,33 @@ var display = {
         if (that.index == null)
             that.index = 0;
         var tr = document.createElement("tr");
-        var th = document.createElement("th");
+        var th = document.createElement("td");
         var td = document.createElement("td");
-        var input = document.createElement("input");
+        var input = document.createElement("button");
+
+        // move row button
+        input.innerHTML = "O";
+        input.setAttribute("class", "o");
+        input.addEventListener("click", function () {
+            if (display.move) {
+                var tr = document.createElement("tr");
+                var table = this.parentNode.parentNode.parentNode;
+                var a = display.move;
+                var b = this.parentNode.parentNode;
+                display.move = null;
+
+                table.insertBefore(tr, b);
+                table.replaceChild(b, a);
+                table.replaceChild(a, tr);
+            } else {
+                display.move = this.parentNode.parentNode;
+            }
+        }, false);
+        th.appendChild(input);
+
 
         // key input box
+        var input = document.createElement("input");
         input.setAttribute("id", "k" + that.index);
         input.setAttribute("value", (key==null?that.index:key));
         th.appendChild(input);
@@ -598,6 +636,7 @@ var display = {
 
 	// display an entry
     "entry" : function (e, index) {
+        this.move = null;
 		// entry encrypted status
         var encrypted = document.createElement("div");
         encrypted.innerHTML="<b>Status</b>: " + (e.encrypted?"Encrypted":"Decrypted");
@@ -638,13 +677,18 @@ var display = {
         }
 
         this.byElements(e.title, [encrypted, description, secret]);
-        buttons.state(true, true, true, !e.encrypted);
     },
 
 	// display current entry
     "current" : function () {
         var e = entryManager.get();
-        this.entry(e.entry, e.index);
+        if (e) {
+            this.entry(e.entry, e.index);
+        } else {
+            this.byStrings("Feisty Pass",
+                document.getElementById("start_page").innerHTML);
+        }
+
     }
 }
 
@@ -716,12 +760,12 @@ var list = {
 
     "get" : function (index) {
         index = index||entryManager.index;
-        var lis = this.ul.getElementsByTagName("li");
+        var lis = this.ul.children;
         var li = null;
         try {
             for (var i=0;i<index.length-1;i++) {
                 li = lis[index[i]];
-                lis = li.getElementsByTagName("ul")[0].getElementsByTagName("li");
+                lis = li.getElementsByTagName("ul")[0].children;
             }
             return lis[index[index.length-1]];
         } catch (e) {
@@ -741,6 +785,7 @@ var list = {
         list.down.disabled = false; 
         list.in.disabled = false;
         list.out.disabled = false;
+        buttons.state(true, true, true, !this.entry.encrypted);
     },
 
     "deselect" : function () {
@@ -753,7 +798,7 @@ var list = {
         this.down.disabled = true;
         this.in.disabled = true;
         this.out.disabled = true;
-
+        buttons.state(false, false, false, null);
     },
 
     "dragging" : null,
@@ -767,7 +812,6 @@ var list = {
             list.placeholder.style.background = "#eee";
             list.placeholder.style.height = (this.clientHeight-10)+"px";
             this.parentNode.insertBefore(list.placeholder, this);
-            list.lis = this.parentNode.getElementsByTagName("li");
 
             // change position of dragged element to absolite equivalent
             this.style.width = this.clientWidth + 'px';
@@ -793,9 +837,10 @@ var list = {
 
             // get list of list items other then placeholder and dragged items
             var l = [];
-            for (var i=0;i<this.lis.length;i++)
-                if (this.lis[i].id == "")
-                    l.push(this.lis[i]);
+            var lis = this.dragging.parentNode.children;
+            for (var i=0;i<lis.length;i++)
+                if (lis[i].id == "")
+                    l.push(lis[i]);
 
             // place placeholder based on dragged item's location
             for (var i=0;i<l.length;i++) {
@@ -821,15 +866,16 @@ var list = {
             this.dragging.parentNode.replaceChild(this.dragging, this.placeholder);
 
             // re-order entryManager's entries to match dragged's new location
-            for (var i=0;i<this.lis.length;i++) {
-                if (this.lis[i].id == "drag" && this.dragging.index != i) {
+            var lis = this.dragging.parentNode.children;
+            for (var i=0;i<lis.length;i++) {
+                if (lis[i].id == "drag" && this.dragging.index != i) {
                     var to = this.dragging.index.slice(0);
                     to.pop();
                     to.push(i);
                     entryManager.move(this.dragging.index, to);
                 }
-                this.lis[i].index.pop();
-                this.lis[i].index.push(i);
+                lis[i].index.pop();
+                lis[i].index.push(i);
             }
 
             // clean drag attribute
@@ -977,14 +1023,14 @@ var buttons = {
             var pass2 = document.getElementById("pass2").value;
             if (pass1 != pass2) {
                 alert ("Could not create entry, passwords do not match!");
-                document.getElementById("pass1").style.border = "1px solid #f00";
-                document.getElementById("pass1").style.boxShadow = "0 0 4px 0 #f00";
-                document.getElementById("pass2").style.border = "1px solid #f00";
-                document.getElementById("pass2").style.boxShadow = "0 0 4px 0 #f00";
+                pass1.style.border = "1px solid #f00";
+                pass1.style.boxShadow = "0 0 4px 0 #f00";
+                pass2.style.border = "1px solid #f00";
+                pass2.style.boxShadow = "0 0 4px 0 #f00";
                 return;
             }
             if (pass1 == "")
-                if (!confirm("No password set, are you sure you don't want to set a password?"))
+                if ( !confirm("No password set, are you sure you don't want to set a password?"))
                     return;
             var title = document.getElementById("title").value;
             var desc = document.getElementById("desc").value;
@@ -998,15 +1044,11 @@ var buttons = {
                     secret[key] = document.getElementById("v"+i).value;
                 }
             }
-            entryManager["new"](title, desc, secret, pass1);
-            entryManager.index = [(entryManager.entries.length-1)];
-            entryManager["encrypt"]();
-            display.current();
+            entryManager.new(title, desc, secret, pass1);
             list.build();
         }, false);
 
         display.byElements("Create New Entry", [p, table, button]);
-        this.state(false, false, false, null);
     },
 
     // builds/displays the "edit current password entry" form
@@ -1059,9 +1101,7 @@ var buttons = {
                         secret[key] = document.getElementById("v"+i).value;
                     }
                 }
-                entryManager["edit"](title, desc, secret, (pass1==""?null:pass1));
-                entryManager["encrypt"]();
-                display.current();
+                entryManager.edit(title, desc, secret, (pass1==""?null:pass1));
                 list.build();
             }, false);
         } else {
@@ -1078,7 +1118,6 @@ var buttons = {
         }
 
         display.byElements(null, [p, table, button]);
-        this.state(true, true, true, null);
     },
 
     // promts the user to confirm entry deletion
@@ -1091,10 +1130,8 @@ var buttons = {
             entryManager["delete"]();
             list.build();
             display.byStrings("Entry Deleted", "<div style='width: 100%; height: 100%; background: #ccc;'></div>");
-            this.state(false, false, false, null);
         } else {
             display.current();
-            this.state(true, true, true, null);
         }
     },
 
@@ -1124,25 +1161,25 @@ var buttons = {
         var p = document.createElement("p");
         p.innerHTML = "Password: ";
 
+        var de = function () {
+            entryManager.decrypt(document.getElementById("password").value);
+            list.build();
+        }
+
         var input = document.createElement("input");
         input.setAttribute("type", "password");
         input.setAttribute("id", "password");
         input.addEventListener("keypress", function (e) {
             var code = (e.keyCode ? e.keyCode : e.which);
             if (code == 13) {
-                entryManager.decrypt(this.value);
-                display.current();
-                list.build();
+                de();
             }
         }, false);
         p.appendChild(input);
 
         var yes = document.createElement("button");
         yes.innerHTML = "yes";
-        yes.addEventListener("click", function () {
-            entryManager.decrypt(document.getElementById("password").value);
-            display.current();
-        }, false);
+        yes.addEventListener("click", de, false);
 
         var no = document.createElement("button");
         no.innerHTML = "No";
@@ -1175,26 +1212,20 @@ var buttons = {
 
     // move selected entry into the entry immediately above it
     "in" : function () {
-        if(list.moveIn()) {
-            list.build();
-            entryManager.save();
-        }
-        document.getElementById("body").innerHTML = JSON.stringify(entryManager.entries[0]);
+        list.moveIn();
     },
 
     // move selected entry out of the entry containing it
     "out" : function () {
-        if (list.moveOut()) {
-            list.build();
-            entryManager.save();
-        }
+        list.moveOut();
     },
 
     // build config page
     "config" : function () {
-        document.getElementById("header").innerHTML="Settings";
+        document.getElementById("header").innerHTML = "Settings";
         var body = document.getElementById("body");
         body.innerHTML = "";
+        var c = entryManager.config;
 
         var table = document.createElement("table");
         table.setAttribute("class", "form");
@@ -1203,85 +1234,61 @@ var buttons = {
         var th = document.createElement("th");
         var td = document.createElement("td");
         th.innerHTML = "Salt";
-        td.innerHTML = '<input id="salt" value="' + entryManager.salt + '" />';
+        td.innerHTML = '<input id="salt" value="' + c.salt + '" />';
         tr.appendChild(th);
         tr.appendChild(td);
         table.appendChild(tr);
 
-        // save
-        var tr = document.createElement("tr");
-        var th = document.createElement("th");
-        var td = document.createElement("td");
-        th.innerHTML = "Save on Edit";
-        td.innerHTML = '<input id="saveedit" type="checkbox" checked />';
-        tr.appendChild(th);
-        tr.appendChild(td);
-        table.appendChild(tr);
+        function checkbox (txt, id, field) {
+            var tr = document.createElement("tr");
+            var th = document.createElement("th");
+            var td = document.createElement("td");
+            th.innerHTML = txt;
+            td.innerHTML = '<input id="'+id+'" type="checkbox" '
+                +(field?"checked":"")+' />';
+            tr.appendChild(th);
+            tr.appendChild(td);
+            table.appendChild(tr);
+        }
+        checkbox("Save on Edit", "saveedit", c.saveEdit);
+        checkbox("Save on New", "savenew", c.saveNew);
+        checkbox("Save on Delete", "savedelete", c.saveDelete);
+        checkbox("Save on Move", "savemove", c.saveMove);
+        checkbox("Encrypt on Edit", "enedit", c.enEdit);
+        checkbox("Encrypt on New", "ennew", c.enNew);
         
-        var tr = document.createElement("tr");
-        var th = document.createElement("th");
-        var td = document.createElement("td");
-        th.innerHTML = "Save on New";
-        td.innerHTML = '<input id="savenew" type="checkbox" checked />';
-        tr.appendChild(th);
-        tr.appendChild(td);
-        table.appendChild(tr);
-
-        var tr = document.createElement("tr");
-        var th = document.createElement("th");
-        var td = document.createElement("td");
-        th.innerHTML = "Save on Delet";
-        td.innerHTML = '<input id="savedelete" type="checkbox" checked />';
-        tr.appendChild(th);
-        tr.appendChild(td);
-        table.appendChild(tr);
-         
-        var tr = document.createElement("tr");
-        var th = document.createElement("th");
-        var td = document.createElement("td");
-        th.innerHTML = "Save on Move";
-        td.innerHTML = '<input id="savemove" type="checkbox" checked />';
-        tr.appendChild(th);
-        tr.appendChild(td);
-        table.appendChild(tr);
-
-        var tr = document.createElement("tr");
-        var th = document.createElement("th");
-        var td = document.createElement("td");
-        th.innerHTML = "Encrypt on Edit";
-        td.innerHTML = '<input id="enedit" type="checkbox" checked />';
-        tr.appendChild(th);
-        tr.appendChild(td);
-        table.appendChild(tr);
-
-        var tr = document.createElement("tr");
-        var th = document.createElement("th");
-        var td = document.createElement("td");
-        th.innerHTML = "Encrypt on New";
-        td.innerHTML = '<input id="ennew" type="checkbox" checked />';
-        tr.appendChild(th);
-        tr.appendChild(td);
-        table.appendChild(tr);
-
         var button = document.createElement("button");
         button.setAttribute("class", "submit");
         button.innerHTML = "Save Changes";
         button.addEventListener("click", function () {
-            entryManager.salt = document.getElementById("salt").value;
+            entryManager.config.salt = 
+                document.getElementById("salt").value;
+            entryManager.config.saveEdit =
+                document.getElementById("saveedit").checked;
+            entryManager.config.saveNew =
+                document.getElementById("savenew").checked;
+            entryManager.config.saveDelete =
+                document.getElementById("savedelete").checked;
+            entryManager.config.saveMove =
+                document.getElementById("savemove").checked;
+            entryManager.config.enEdit =
+                document.getElementById("enedit").checked;
+            entryManager.config.enNew =
+                document.getElementById("ennew").checked;
             entryManager.save();
             display.current();
         }, false);
 
         body.appendChild(table);
         body.appendChild(button);
-        //this.state(false, false, false, null);
     },
 
     // display help information
     "help" : function () {
-        document.getElementById("header").innerHTML="Help";
-        document.getElementById("body").innerHTML = document.getElementById("h").innerHTML;
-        this.state(false, false, false, null);
+        var h = document.getElementById("header");
+        h.innerHTML = "Help";
+        var b = document.getElementById("body");
+        b.innerHTML = document.getElementById("help_page").innerHTML;
     },
 
     // governs which buttons are enabled and whether it says Encrypt or Decrypt
@@ -1322,7 +1329,8 @@ function layout () {
     lbox.style.width ="";
     body.style.height=body.clientHeight+"px";
     body.style.width =body.clientWidth +"px";
-    lbox.style.height=(lbox.parentNode.clientHeight-2*(button.clientHeight)-10)+"px";
+    lbox.style.height=(lbox.parentNode.clientHeight-2
+            *(button.clientHeight)-10) +"px";
     lbox.style.width =lbox.clientWidth +"px";
 
 	for (var i=0;i<body.children.length;i++)

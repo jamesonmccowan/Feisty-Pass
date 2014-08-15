@@ -131,12 +131,17 @@ button:hover {
 .form {width: 100%;border-collapse: collapse;}
 .form td {text-align: center;}
 .form td, .form th {width: 50%;}
-.form input, .form textarea {width: 95%;}
-.form .v {width: 80%;}
+.form input, .form textarea {width: 80%;}
+.o {position: relative;
+    float: left;
+    font-size: 8pt;
+    width: 15%;}
+
 .x {position: relative;
     float: right;
     font-size: 8pt;
     width: 15%;}
+
 
 #count {
     width: 90%;

@@ -70,7 +70,12 @@
                 <td>
             </tr>
         </table>
-        <div id="h">
+        <div id="start_page">
+            <p style="text-align: center;">Welcome To Feisty Pass, the password encryption app!</p>
+            <p>Just getting started? It's strongly recommended you change a different salt in the Settings menu before beginning.</p>
+            <p>Learn more about Feisty Pass, salt, and encryption in general by seeing the help section.</p>
+        </div>
+        <div id="help_page">
             <dl>
                 <dt>What Is Feisty Pass?</dt>
                 <dd>Feisty Pass is a password management app that automatically encrypts its entries by using feistel networks and another password.</dd>
@@ -88,12 +93,12 @@
                         <span>This will display the form used to create new entries</span></li>
                         <li>Optional: Give the entry a title and description.<br />
                         <span>Though not required, they are intended to help you recognize and use your passwords.
-                        For example a website could require some special condition before or afer entering 
+                        For example a website could require some special condition before or after entering 
                         your password and a description is the perfect place to make note of it</span></li>
                         <li>Optional: add and delete fields from the section that will be encrypted.<br />
                         <span>Though for many things a username and password are enough, some things require more data that you don't want other people knowing.
                         This is also a good place to put the answers to security questions.<br />
-                        Add a feild by pressing the "More Rows" button. Delete a feild by pressing the "X" button to the left of the field.</span></li>
+                        Add a field by pressing the "More Rows" button. Delete a field by pressing the "X" button to the left of the field.</span></li>
                         <li>Optional: set a password.<br />
                         <span>This is highly recommended, as without a password the only thing protecting the entry is the salt (see below).</span></li>
                         <li>Press the "Create New Entry" button.<br />
@@ -106,7 +111,7 @@
                 <dd>You can edit an entry even if it is encrypted. But if it is encrypted, you can only see and edit the title and description.
                 Other then that, editing is the same as making a new entry; simply press the "Edit" button and change what you want.<br />
                 Note: it is currently not possible to edit an entry's password to be blank.
-                If the password and confirm feild are left blank, the entry's password doesn't change.</dd>
+                If the password and confirm field are left blank, the entry's password doesn't change.</dd>
             </dl>
             <dl>
                 <dt>Selecting an Entry</dt>
@@ -182,7 +187,7 @@
             </dl>
             <dl>
                 <dt>What is a Feistel Network?</dt>
-                <dd><p>A Feistel Network is a key element of many encryption schemes, incliding Feisty Pass's. The steps a Feistel Netork performs are as follows:</p>
+                <dd><p>A Feistel Network is a key element of many encryption schemes, including Feisty Pass's. The steps a Feistel Network performs are as follows:</p>
                 <table><tr>
                     <td>
                         <ol>
@@ -193,7 +198,7 @@
                             <li>Run the old right block and a key through a one way function.<br />
                             x = F(R<sub>n</sub>, K<sub>n</sub>)</li>
 
-                            <li>Combind the previous result with the old left block to create the new right block.<br />
+                            <li>Combine the previous result with the old left block to create the new right block.<br />
                             R<sub>n+1</sub> = L<sub>n</sub> &#8853; x</li>
 
                             <li>Repeat steps 1 through 4 for as many times as specified.</li>

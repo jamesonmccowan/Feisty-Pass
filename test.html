@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Feisty Pass Entry Tester</title>
+<script type="text/javascript" src="js/SHA-512.js"></script>
+<script type="text/javascript" src="js/feistel.js"></script>
+<script type="text/javascript" src="js/index.js"></script>
+<style>
+    td {border: 1px solid black;}
+</style>
+<script type="text/javascript"><!--
+window.addEventListener("load", function () {
+    var tests = {};
+    var e = entryManager;
+    e.config = {
+        "salt" : "thinkOfABetterSalt",
+        "saveEdit" : false,
+        "saveNew" : false,
+        "saveDelete" : false,
+        "saveMove" : false,
+        "enEdit" : false,
+        "enNew" : false,
+    };
+    e.index = [];
+    e.entries = [];
+    e.hashes = [];
+
+    function status () {
+        var str = "";
+        str += "index: " + JSON.stringify(e.index);
+        str += "<br />entries: " + JSON.stringify(e.entries);
+        str += "<br />hashes: " + JSON.stringify(e.hashes);
+        return str
+    }
+
+    e.new("test entry 1", "", {}, "1");
+    tests.new = status();
+    e.new("test entry 2", "", {}, "2");
+    tests.new2 = status();
+    e.new("test entry 3", "", {}, "3");
+    tests.new3 = status();
+    e.index = [1];
+    e.edit("Edited entry 2", "", {}, "2");
+    tests.edit1 = status();
+    e.edit("Edited entry 2", "", {}, "2");
+    tests.edit1 = status();
+    e.move([1], [0]);
+    tests.move1 = status();
+    e.index = [1];
+    e.move([2], [0]);
+    tests.move2 = status();
+    e.move([1], [0, 0]);
+    tests.move3 = status();
+    e.move([0, 0], [1]);
+    tests.move4 = status();
+    e.move([1], [0, 0]);
+    e.delete([0, 0]);
+    tests.delete1 = status();
+
+
+    // errors uncovered during testing:
+    /* moving current entry sets index to []
+       - fixed by turning arrays into strings for comparison
+    */
+
+    var str = "<table>";
+    for (var i in tests) {
+        str += "<tr><td>" + i + "</td><td>" + tests[i] + "</td></tr>";
+    }
+    str += "</table>";
+    var body = document.getElementsByTagName("body")[0];
+    body.innerHTML = str;
+}, false);
+--></script>
+</head>
+<body>
+<div style="display: none;"><table id="main"><tr><th id="header">Feisty Pass</th><td class="lbox" rowspan="2"><button id="up">Move Up</button><button id="down">Move Down</button><div id="lbox"><br /></div><button id="in">Move Into</button><button id="out">Move Out Of</button></td></tr><tr><td class="body"><div id="body"><p style="text-align: center;">Welcome To Feisty Pass, the password encryption app!</p><p>Just getting started? It's strongly recommended you change a different salt in the Settings menu before beginning.</p><p>Learn more about Feisty Pass, salt, and encryption in general by seeing the help section.</p></div></td></tr><tr id="buttons"><td colspan="2"><table><tr><td><button id="new">New</button></td><td><button id="edit">Edit</button></td><td><button id="delete">Delete</button></td><td><button id="crypt">Decrypt</button></td></tr><tr><td><button id="save">Save To File</button></td><td><button id="load">Load From File</button></td><td><button id="config" >Settings</button></td><td><button id="help">Help</button></td></tr></table><td></tr></table><div id="h"></div></div>
+</body>
+</html>
