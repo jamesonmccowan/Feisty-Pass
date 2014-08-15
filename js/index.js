@@ -467,12 +467,12 @@ var entryManager = {
         "saveMove" : true,
         "enNew" : true,
         "enEdit" : true,
-        "randPasses" : true,
+        "randPasses" : false,
     },
-    // generate a random 8 character password string
+    // generate a random 10 character password string
     // I have no idea what I'm doing
     "random" : function () {
-        var length = 8;
+        var length = 10;
         var lower = "abcdefghijkmnopqrstuvwxyz";
         var upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
         var numbers = "123456789";

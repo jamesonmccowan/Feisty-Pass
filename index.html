@@ -95,7 +95,8 @@
                         This is also a good place to put the answers to security questions.<br />
                         Add a field by pressing the "More Rows" button. Delete a field by pressing the "X" button to the left of the field.<br />
                         Rows can be switched around by clicking on the "o" button of one row,
-                        then clicking on the "o" button on the row you want to switch it with.</span></li>
+                        then clicking on the "o" button on the row you want to switch it with.</span><br />
+                        Note: each field must have a unique name, duplicate names will result in the later name overwriting the earlier one.</li>
                         <li>Optional: set a password.<br />
                         <span>This is highly recommended, as without a password the only thing protecting the entry is the salt (see below).</span></li>
                         <li>Press the "Create New Entry" button.<br />
@@ -104,10 +105,11 @@
                 </dd>
             </dl>
             <dl>
-                <dt>Why is there a password in the Password field?</dt>
-                <dd>The password in the encrypted section is an automatically generated password.
-                Feel free to delete it or prevent Feisty Pass from generating it by disabling it in the settings.
-                You can click the "New" button to generate a different password.</dd>
+                <dt>Generating Random Passwords</dt>
+                <dd>Feisty Pass can generate random passwords in the Password field of the encrypted section on new entries.
+                To activate this feature, simply go into settings and check the "Generate Random Passwords" checkbox.<br />
+                If you don't like the password it generates, you can click the "New" button to generate a different password,
+                though this will clear all the other fields.</dd>
             </dl>
             <dl>
                 <dt>Editing an Entry</dt>
@@ -124,7 +126,10 @@
             <dl>
                 <dt>Sorting Entries</dt>
                 <dd>The list of current entries is shown on the right side of the screen.
-                To rearrange entries, you can drag then up and down with the mouse and place them where you like.</dd>
+                To rearrange entries, you can use the "Move" buttons to move the currently selected entry around.<br />
+                "Move Into" will move the currently selected entry into the entry above it, making it a sub-entry.
+                This is only possible if the entry above the selected one is decrypted. "Move Out Of" undoes "Move Into".<br />
+                Mouse controls can be used to drag and drop entries into place.</dd>
             </dl>
             <dl>
                 <dt>Deleting Entries</dt>
@@ -177,6 +182,31 @@
             </dl>
             <hr />
             <p>The Following is a light overview of cryptography</p>
+            <dl>
+                <dt>What is a Bad Password?</dt>
+                <dd>A bad password is one that is easy to guess or find out.
+                    Attackers try to guess passwords in a variety of ways, including trying common words and commonly used passwords.
+                    For these and other reasons, never use a password that is any of the following:
+                    <ul>
+                        <li><b>123456</b>, <b>111111</b>, <b>123123</b>, or any predictable series of numbers.</li>
+                        <li><b>password</b> - This one's especially bad, but any plane word is a problem.</li>
+                        <li><b>password1</b> - Also common, also bad because of that.</li>
+                        <li><b>qwerty</b></li>
+                        <li><b>abc123</b></li>
+                        <li><b>adobe123</b> - The name of the product you're using isn't going to protect you.</li>
+                        <li><b>admin</b> - This is actually the default password for some devices.</li>
+                        <li><b>letmein</b></li>
+                    </ul>
+                    Other things of note:
+                    <ul>
+                        <li>Don't use the same word as your log-in, or any variation of it.</li>
+                        <li>Don't use only letters or only numbers.</li>
+                        <li>Don't use names of spouses, children, girlfriends/boyfriends or pets.</li>
+                        <li>Don't use phone numbers, Social Security numbers or birthdates.</li>
+                        <li>Don't use any word that can be found in the dictionary</li>
+                    </ul>
+                </dd>
+            </dl>
             <dl>
                 <dt>What is cryptography?</dt>
                 <dd>Cryptography is a collection of techniques for securely communicating with others despite the presence of observers.
