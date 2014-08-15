@@ -284,7 +284,7 @@ var entryManager = {
 
             if (!e.hash) {
                 throw Error("Unable to Encrypt: null hash\n"
-                        +"(This shouldn't happen, but try Setting a new Password for this entry to fix this error)");
+                        +"(This shouldn't happen, but try Setting a new "                       +"Password for this entry to fix this error)");
             }
             this.feistel.key = e.hash.hash;
             e.entry.secret = str2hex(this.feistel.encrypt(
@@ -306,7 +306,8 @@ var entryManager = {
             if (save != true)
                 e.h_container[last] = this.hash(pass);
             
-            if (e.h_container && e.h_container[last] && e.h_container[last].hash)
+            if (e.h_container && e.h_container[last]
+            && e.h_container[last].hash)
                 this.feistel.key = e.h_container[last].hash;
             else
                 alert("decryption failed for "+JSON.stringify(e.index));
@@ -346,7 +347,7 @@ var entryManager = {
                     this.encrypt([i], true);
             
             // save to local storage
-            window.localStorage.setItem('entries', JSON.stringify(this.entries));
+            window.localStorage.setItem('entries',JSON.stringify(this.entries));
             window.localStorage.setItem('config', JSON.stringify(this.config));
 
             // decrypt everything that wasn't encrypted before save
@@ -460,23 +461,54 @@ var entryManager = {
     },
     "config" : {
         "salt" : "thinkOfABetterSalt",
-        "saveEdit" : true,
         "saveNew" : true,
+        "saveEdit" : true,
         "saveDelete" : true,
         "saveMove" : true,
-        "enEdit" : true,
         "enNew" : true,
-    }
+        "enEdit" : true,
+    },
+    // generate a random 8 character password string
+    // I have no idea what I'm doing
+    "random" : function () {
+        var length = 8;
+        var lower = "abcdefghijkmnopqrstuvwxyz";
+        var upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        var numbers = "123456789";
+        var symbols = "-_";
+        // zero, O, l and I dropped from list because
+        // they can be mistaken for other character
+
+        var set = ""; // we may want to make this variable at some point
+        set += lower + upper + numbers + symbols;
+
+        var pass = [];
+        for (var i=0;i<length-3;i++) {
+            pass.push(set.charAt(Math.floor(Math.random()*set.length)));
+        }
+        pass.splice(Math.floor(Math.random()*(length-3)), 0,
+            lower.charAt(Math.floor(Math.random()*lower.length)));
+        pass.splice(Math.floor(Math.random()*(length-2)), 0,
+            upper.charAt(Math.floor(Math.random()*upper.length)));
+        pass.splice(Math.floor(Math.random()*(length-1)), 0,
+            numbers.charAt(Math.floor(Math.random()*lower.numbers)));
+
+        return pass.join("");
+    },
 }
 
 // provide helpful display functions
 var display = {
     "init" : function () {
-        display.header = document.getElementById("header");
-        display.body = document.getElementById("body");
+        this.header = document.getElementById("header");
+        this.body = document.getElementById("body");
+        this.startHeader = this.header.innerHTML;
+        this.startBody = this.body.innerHTML;
     },
     "header" : null,
     "body" : null,
+    "startHeader" : null,
+    "startBody" : null,
     "move" : null,
 
     // set the display's content by a header and body string
@@ -490,7 +522,8 @@ var display = {
         }
     },
 
-    // set the display's content by a header string and an array of dom elements to append to the body
+    // set the display's content by a header string and an array of dom 
+    // elements to append to the body
     "byElements" : function (header, list) {
         this.move = null;
         if (header != null) {
@@ -504,7 +537,8 @@ var display = {
         }
     },
 
-    // used in the add and edit forms to add another potential entry that reads into the 
+    // used in the add and edit forms to add another potential entry that 
+    // reads into the 
     "addRow" : function (that, key, value) {
         if (that.index == null)
             that.index = 0;
@@ -518,15 +552,21 @@ var display = {
         input.setAttribute("class", "o");
         input.addEventListener("click", function () {
             if (display.move) {
-                var tr = document.createElement("tr");
-                var table = this.parentNode.parentNode.parentNode;
-                var a = display.move;
-                var b = this.parentNode.parentNode;
-                display.move = null;
+                var tr1 = display.move;
+                var tr2 = this.parentNode.parentNode; 
+                var a = tr1.getElementsByTagName("input")[0];
+                var b = tr2.getElementsByTagName("input")[0];
+                var swap = a.value;
+                a.value = b.value;
+                b.value = swap;
 
-                table.insertBefore(tr, b);
-                table.replaceChild(b, a);
-                table.replaceChild(a, tr);
+                var a = tr1.getElementsByTagName("input")[1];
+                var b = tr2.getElementsByTagName("input")[1];
+                swap = a.value;
+                a.value = b.value;
+                b.value = swap;
+
+                display.move = null;
             } else {
                 display.move = this.parentNode.parentNode;
             }
@@ -685,8 +725,7 @@ var display = {
         if (e) {
             this.entry(e.entry, e.index);
         } else {
-            this.byStrings("Feisty Pass",
-                document.getElementById("start_page").innerHTML);
+            this.byStrings(this.startHeader, this.startBody);
         }
 
     }
@@ -1013,7 +1052,7 @@ var buttons = {
         var table = display.formTable();
         var button = table.getElementsByTagName("button")[0];
         display.addRow(button, "Username");
-        display.addRow(button, "Password");
+        display.addRow(button, "Password", entryManager.random());
 
         button = document.createElement("button");
         button.innerHTML = "Create New Entry";

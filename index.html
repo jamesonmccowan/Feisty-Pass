@@ -70,11 +70,6 @@
                 <td>
             </tr>
         </table>
-        <div id="start_page">
-            <p style="text-align: center;">Welcome To Feisty Pass, the password encryption app!</p>
-            <p>Just getting started? It's strongly recommended you change a different salt in the Settings menu before beginning.</p>
-            <p>Learn more about Feisty Pass, salt, and encryption in general by seeing the help section.</p>
-        </div>
         <div id="help_page">
             <dl>
                 <dt>What Is Feisty Pass?</dt>
@@ -98,13 +93,21 @@
                         <li>Optional: add and delete fields from the section that will be encrypted.<br />
                         <span>Though for many things a username and password are enough, some things require more data that you don't want other people knowing.
                         This is also a good place to put the answers to security questions.<br />
-                        Add a field by pressing the "More Rows" button. Delete a field by pressing the "X" button to the left of the field.</span></li>
+                        Add a field by pressing the "More Rows" button. Delete a field by pressing the "X" button to the left of the field.<br />
+                        Rows can be switched around by clicking on the "o" button of one row,
+                        then clicking on the "o" button on the row you want to switch it with.</span></li>
                         <li>Optional: set a password.<br />
                         <span>This is highly recommended, as without a password the only thing protecting the entry is the salt (see below).</span></li>
                         <li>Press the "Create New Entry" button.<br />
                         <span>This will create a new entry using the information you've filled in.</span></li>
                     </ol>
                 </dd>
+            </dl>
+            <dl>
+                <dt>Why is there a password in the Password field?</dt>
+                <dd>The password in the encrypted section is an automatically generated password.
+                Feel free to delete it or prevent Feisty Pass from generating it by disabling it in the settings.
+                You can click the "New" button to generate a different password.</dd>
             </dl>
             <dl>
                 <dt>Editing an Entry</dt>
@@ -139,7 +142,8 @@
                 This will bring up the decryption menu, which asks for a password.
                 Enter in the password for the selected entry and press Yes, this will attempt to decrypt the entry.
                 If Decryption failed, the entry will be displayed still encrypted, otherwise the entry will be displayed decrypted.<br />
-                If an entry is already decrypted, the Decrypt button will instead be the Encrypt button.</dd>
+                If an entry is already decrypted, the Decrypt button will instead be the Encrypt button.<br />
+                If you didn't set a password, then just press "yes" and the entry should decrypt.</dd>
             </dl>
             <dl>
                 <dt>Encrypting Entries</dt>
