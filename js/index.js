@@ -53,7 +53,7 @@ var entryManager = {
     // var ret = {
     //     index : the index of the entry
     //     entry : the entry itself
-    //     hash : the stored hash of the entry (may be null)
+    //     hash : the stored hash of the entry
     //     e_container : array that holds the entry
     //     h_container : array that holds the hash of the entry
     // }
@@ -64,20 +64,11 @@ var entryManager = {
             var ret = this.getContainer(index);
             var last = index[index.length-1]
 
-            try {
             ret.entry = ret.e_container[last];
-            if (!ret.entry.encrypted) {
-                ret.hash = ret.h_container[last];
-                if (!ret.hash)
-                    alert("null hash!" + JSON.stringify(index)
-                            + ", " + JSON.stringify(ret.h_container));
-            } else {
-                ret.hash = null;
-            }
-            } catch (e) {
-                alert ("error! " + last);
-                throw e;
-            }
+            ret.hash = ret.h_container[last];
+            if (!ret.hash)
+                alert("null hash!" + JSON.stringify(index)
+                        + ", " + JSON.stringify(ret.h_container));
             return ret;
         }
         return null;
@@ -105,8 +96,6 @@ var entryManager = {
             }
             if (!next.secret.entries)
                 next.secret.entries = [];
-            if (!h[index[i]].sub)
-                h[index[i]].sub = [];
             e = next.secret.entries;
             h = h[index[i]].sub;
         }
@@ -158,8 +147,10 @@ var entryManager = {
             entry.description = desc;
             if (!entry.encrypted) {
                 entry.secret = secret;
-                if (pass != null) {
-                    e.h_container[e.index[e.index.length-1]] = this.hash(pass);
+                if (pass != null) { // update password if needed
+                    var h = e.h_container[e.index[e.index.length-1]];
+                    // don't overwrite sub hashes
+                    h.hash = this.hash(pass).hash;
                 }
             }
             if (this.config.enEdit)
@@ -282,7 +273,7 @@ var entryManager = {
                 }
             }
 
-            if (!e.hash) {
+            if (!e.hash || e.hash.hash.length == 0) {
                 throw Error("Unable to Encrypt: null hash\n"
                         +"(This shouldn't happen, but try Setting a new "                       +"Password for this entry to fix this error)");
             }
@@ -291,7 +282,7 @@ var entryManager = {
                         JSON.stringify(e.entry.secret)));
             e.entry.encrypted = true;
             if (save == null || save == false)
-                e.h_container[last] = null;
+                e.h_container[last] = this.hash();
             this.feistel.key = "";
             return true;
         }
@@ -302,35 +293,30 @@ var entryManager = {
     "decrypt" : function (pass, index, save) {
         var e = this.get(index);
         if (e && e.entry && e.entry.encrypted) {
-            var last = e.index[e.index.length-1];
             if (save != true)
-                e.h_container[last] = this.hash(pass);
+                e.hash.hash = this.hash(pass).hash;
             
-            if (e.h_container && e.h_container[last]
-            && e.h_container[last].hash)
-                this.feistel.key = e.h_container[last].hash;
+            if (e.hash && e.hash.hash.length > 0) 
+                this.feistel.key = e.hash.hash;
             else
-                alert("decryption failed for "+JSON.stringify(e.index));
+                return false;
 
             var s = this.feistel.decrypt(hex2str(e.entry.secret));
             if (s[0] == "{") {
                 e.entry.secret = JSON.parse(s);
                 e.entry.encrypted = false;
-                if (e.entry.secret.entries) {
-                    e.h_container[e.index[last]].sub = 
-                        new Array(e.entry.secret.entries.length);
-                }
                 var entries = e.entry.secret.entries||[];
-                // try to decrypt subentries with same password
-                // commented out because it's too slow
-                //for (var i=0;i<entries.length;i++) {
-                //    this.decrypt(pass, e.index.concat([i]), save);
-                //}
+                for (var i=0;i<entries.length;i++) {
+                    if (save) { // restore subentries to decrypted state
+                        this.decrypt(pass, e.index.concat([i]), save);
+                    } else { // prepare blank hashes for subentries
+                        e.hash.sub.push(this.hash());
+                    }
+                }
                 this.feistel.key = "";
                 return true;
             } else {
-                e.h_container[last] = null;
-                return false;
+                e.hash.hash = "";
             }
         } else {
             alert("invalid entry");
@@ -342,8 +328,8 @@ var entryManager = {
     "save" : function () {
         if (typeof window.localStorage != "undefined") {
             // first encrypt everything
-            for (var i=0;i<this.hashes.length;i++)
-                if (this.hashes[i] != null)
+            for (var i=0;i<this.entries.length;i++)
+                if (!this.entries[i].encrypted)
                     this.encrypt([i], true);
             
             // save to local storage
@@ -352,7 +338,7 @@ var entryManager = {
 
             // decrypt everything that wasn't encrypted before save
             for (var i=0;i<this.hashes.length;i++)
-                if (this.hashes[i] != null)
+                if (this.hashes[i].hash.length >  0)
                     this.decrypt(null, [i], true);
         }
     },
@@ -367,7 +353,7 @@ var entryManager = {
                 	this.entries = state;
                     this.hashes = [];
             	    for (var i=0;i<this.entries.length;i++) {
-        	            this.hashes.push(null);
+        	            this.hashes.push(this.hash());
     	            }
 	            }
 
@@ -385,8 +371,8 @@ var entryManager = {
     // save entries to file
     "toFile" : function () {
         // first encrypt everything
-        for (var i=0;i<this.hashes.length;i++)
-            if (this.hashes[i] != null)
+        for (var i=0;i<this.entries.length;i++)
+            if (!this.entries[i].encrypted)
                 this.encrypt(this.entries[i], i, true);
             
         // save to local storage
@@ -457,7 +443,7 @@ var entryManager = {
         else
             return {
                 sub : [],
-                hash : SHA512(this.config.salt)};
+                hash : ""};
     },
     "config" : {
         "salt" : "thinkOfABetterSalt",
