@@ -273,7 +273,7 @@ var entryManager = {
                 }
             }
 
-            if (!e.hash || e.hash.hash.length == 0) {
+            if (e.hash.hash.length == 0) {
                 throw Error("Unable to Encrypt: null hash\n"
                         +"(This shouldn't happen, but try Setting a new "                       +"Password for this entry to fix this error)");
             }
@@ -292,7 +292,10 @@ var entryManager = {
     // decrypt secret section of current entry
     "decrypt" : function (pass, index, save) {
         var e = this.get(index);
-        if (e && e.entry && e.entry.encrypted) {
+        if (e == null)
+            return false;
+
+        if (e.entry.encrypted) {
             if (save != true)
                 e.hash.hash = this.hash(pass).hash;
             
@@ -338,7 +341,7 @@ var entryManager = {
 
             // decrypt everything that wasn't encrypted before save
             for (var i=0;i<this.hashes.length;i++)
-                if (this.hashes[i].hash.length >  0)
+                if (this.hashes[i].hash.length > 0)
                     this.decrypt(null, [i], true);
         }
     },
@@ -375,7 +378,6 @@ var entryManager = {
             if (!this.entries[i].encrypted)
                 this.encrypt(this.entries[i], i, true);
             
-        // save to local storage
         var save = {
             "entries" : this.entries,
             "config" : this.config
@@ -394,8 +396,8 @@ var entryManager = {
 
         // decrypt everything that wasn't encrypted before save
         for (var i=0;i<this.hashes.length;i++)
-            if (this.hashes[i] != null)
-                this.decrypt(null, this.entries[i], i, true);
+            if (this.hashes[i].hash.length > 0)
+                this.decrypt(null, [i], true);
     },
 
     // load entries from file
@@ -412,7 +414,7 @@ var entryManager = {
                 	entryManager.entries = state.entries;
                     entryManager.hashes = [];
             	    for (var i=0;i<entryManager.entries.length;i++) {
-        	            entryManager.hashes.push(null);
+        	            entryManager.hashes.push(entryManager.hash());
     	            }
 	            }
 
@@ -421,7 +423,7 @@ var entryManager = {
 	            }
                 list.build();
                 if (entryManager.entries.length > 0) {
-                    list.ul.getElementsByTagName("li")[0].select();
+                    list.ul.children[0].select();
                 }
             }
             fileReader.readAsText(fileToLoad, "UTF-8");
