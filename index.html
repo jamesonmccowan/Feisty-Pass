@@ -36,8 +36,18 @@
                 </div>
             </div>
 
-            <div data-role="footer"  data-position="fixed" data-tap-toggle="false">
-                <a href="#entryEdit" data-icon="plus" data-iconpos="bottom" style="display: block;" onclick="setNew()">New</a>
+            <div data-role="footer" data-position="fixed">
+                <div data-role="navbar">
+                    <ul>
+                        <li>
+                            <a href="#entryEdit" data-icon="plus" data-iconpos="bottom" style="display: block;" onclick="setNew()">New</a>
+                        </li>
+                        <li>
+                            <input id="sortable" data-theme="a" type="checkbox" onclick="toggleSort()" />
+                            <label for="sortable">Sortable</label>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -210,7 +220,8 @@
                                 <ol>
                                     <li>
                                         Press the "New" button at the bottom of the <a href="#indexPage">List</a> screen.<br />
-                                        This will display the form used to create new entries
+                                        This will display the form used to create new entries<br />
+                                        If the "New" button is not shown on the screen, taping the screen should make it appear.
                                     </li>
                                     <li>
                                         Fill out the form that appears<br />
@@ -271,7 +282,10 @@
                         </li>
                         <li data-role="collapsible">
                             <h3>Sorting Entries</h3>
-                            <p>From the <a href="#indexPage">List</a> screen, drag and drop the entries into place.</p>
+                            <p>From the <a href="#indexPage">List</a> screen,
+                            make sure the "Sortable" checkbox at the end of the screen, then drag and drop the entries into place.<br />
+                            <br />
+                            If the checkbox is not shown on the screen, taping the screen should make it appear.</p>
                         </li>
                         <li data-role="collapsible">
                             <h3>Encrypting Entries</h3>

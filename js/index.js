@@ -408,6 +408,15 @@ function displayList () {
     }
 }
 
+function toggleSort() {
+    if ($("#sortable").is(":checked")) {
+        $("#current").sortable( "option", "disabled", false );
+    } else {
+        $("#current").sortable( "option", "disabled", true );
+    }
+    $("#sortable").checkboxradio("refresh");
+}
+
 function displayEntry (index) {
     var entry;
     if (index >= 0) {
@@ -611,6 +620,9 @@ function deleteAll() {
 
 $(document).on("pageshow", "#indexPage", function () {
     displayList();
+    $("#sortable").attr('checked', false);
+    $("#sortable").checkboxradio("refresh");
+    $('#current').sortable( "option", "disabled", true );
 });
 
 $(document).on("pageinit", "#indexPage", function () {
@@ -619,8 +631,9 @@ $(document).on("pageinit", "#indexPage", function () {
     // make list sortable by dragging
     $('#current')
         .sortable({
-            'containment': 'parent',
-            'opacity': 0.6,
+            containment: 'parent',
+            opacity: 0.6,
+            disabled: true,
             update: function(event, ui) {
                 var a = $('#current a');
                 var start = -1;
