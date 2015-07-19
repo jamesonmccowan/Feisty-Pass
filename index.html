@@ -159,8 +159,23 @@
                 <label for="encrypt_new">Encrypt on New</label>
                 <input id="random_passwords" data-theme="a" type="checkbox" onchange="updateConfig()" />
                 <label for="random_passwords">Generate Random Passwords</label>
+                <a href="#popupRandomSalt" data-rel="popup" data-position-to="window" data-transition="pop" class="ui-btn ui-corner-all ui-icon-star ui-btn-icon-left">Generate Random Salt</a>
                 <a href="#popupDeleteAll" data-rel="popup" data-position-to="window" data-transition="pop" class="ui-btn ui-corner-all ui-icon-delete ui-btn-icon-left">Delete All Entries</a>
             </div>
+
+            <div data-role="popup" id="popupRandomSalt" data-overlay-theme="b" data-theme="b" data-dismissible="false" style="max-width:400px;">
+                <div data-role="header" data-theme="a">
+                    <h1>Random Salt?</h1>
+                </div>
+
+                <div role="main" class="ui-content">
+                    <h3 class="ui-title">Are you sure you want to change the salt?</h3>
+                    <p>This action may make all past entries unaccessible if you loose the current salt.</p>
+                    <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" data-transition="flow" onclick="randomSalt()">Random Salt</a>
+                    <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back">Cancel</a>
+                </div>
+            </div>
+
 
             <div data-role="popup" id="popupDeleteAll" data-overlay-theme="b" data-theme="b" data-dismissible="false" style="max-width:400px;">
                 <div data-role="header" data-theme="a">
@@ -187,260 +202,260 @@
             <div style="padding: 0px 10px;">
                 <ul data-role="collapsible-set" data-icon="carat-r" data-filter="true"
                      data-filter-placeholder="Search Help..." data-inset="true" class="help-list">
-                        <li data-role="collapsible" >
-                            <h3>What Is Feisty Pass?</h3>
-                            <p>Feisty Pass is a password management app that automatically encrypts its entries by using feistel networks and another password.</p>
-                        </li>
-                        <li data-role="collapsible" >
-                            <h3>How do I use Feisty Pass?</h3>
-                            <p>
-                                Feisty Pass is meant to offer some protect for sensitive information that you need to have available.
-                                It is not fool-proof security/encryption, but it should be enough for daily use.<br />
-                                <br />
-                                <b>Getting Started</b>
-                                <ul>
-                                    <li>
-                                        Change the salt. Do this before creating your entries.
-                                        The default salt is likely to grow less and less secure over time.
-                                    </li>
-                                    <li>
-                                        Create your entries. It is recommended that you use two or more passwords to encrypt all your entries,
-                                        one password for more important things, and another for less important things.
-                                    </li>
-                                    <li>
-                                        Don't forget to include information in the encrypted section that may be needed,
-                                        such as what email address was used or the username on an account.
-                                    </li>
-                                </ul>
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Creating a New Entry</h3>
-                            <p>
-                                <ol>
-                                    <li>
-                                        Press the "New" button at the bottom of the <a href="#indexPage">List</a> screen.<br />
-                                        This will display the form used to create new entries<br />
-                                        If the "New" button is not shown on the screen, taping the screen should make it appear.
-                                    </li>
-                                    <li>
-                                        Fill out the form that appears<br />
-                                        The only requirement for the form is that the two password fields match.
-                                    </li>
-                                    <li>
-                                        Press "Save".<br />
-                                        This should create a new entry and display it for you.
-                                    </li>
-                                </ol>
-                                <u>Note:</u> Only the last field is encrypted, and is meant for storing sensitive information.
-                                The password fields are used to encrypt and decrypt the entry, they are not saved.
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Editing an Entry</h3>
-                            <p>
-                                You can edit an entry even if it is encrypted.
-                                But if it is encrypted, you can only see and edit the title and description.
-                                <ol>
-                                    <li>
-                                        From the <a href="#indexPage">List</a> screen, Click on the entry you want to edit.
-                                        This will display the specific entry.
-                                    </li>
-                                    <li>
-                                        Optional: Decrypt the entry before editing it so that the password and encrypted content can be edited.
-                                        Press the "Decrypt" button on the bottom of the screen and enter the correct password for this entry into the popup.
-                                    </li>
-                                    <li>
-                                        From the Entry's Display screen, press the "Edit" button at the bottom of the screen.
-                                        This will bring you to the edit screen for the specific entry.
-                                    </li>
-                                    <li>
-                                        In the edit screen, change the entry to your liking, then press "Save".<br />
-                                        The only requirement for the form is that the two password fields match.
-                                        If you leave the password fields blank, the entry's password will not change.
-                                    </li>
-                                </ol>
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Fiesty Markup</h3>
-                            <p>
-                                Entries support markup in their description and in the encrypted section.<br />
-                                <br />
-                                <b>Password Box:</b> This is a box meant to hold passwords, for a bit of added protection.<br />
-                                <table>
-                                    <tr>
-                                        <th>Form Input</th>
-                                        <th>Entry Display</th>
-                                    </tr>
-                                    <tr>
-                                        <td><input id="pw_sampe_in" type="text" value="[password]" READONLY/></td>
-                                        <td id="pw_sample_out"></td>
-                                    </tr>
-                                </table>
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Sorting Entries</h3>
-                            <p>From the <a href="#indexPage">List</a> screen,
-                            make sure the "Sortable" checkbox at the end of the screen, then drag and drop the entries into place.<br />
+                    <li data-role="collapsible" >
+                        <h3>What Is Feisty Pass?</h3>
+                        <p>Feisty Pass is a password management app that automatically encrypts its entries by using feistel networks and another password.</p>
+                    </li>
+                    <li data-role="collapsible" >
+                        <h3>How do I use Feisty Pass?</h3>
+                        <p>
+                            Feisty Pass is meant to offer some protect for sensitive information that you need to have available.
+                            It is not fool-proof security/encryption, but it should be enough for daily use.<br />
                             <br />
-                            If the checkbox is not shown on the screen, taping the screen should make it appear.</p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Encrypting Entries</h3>
-                            <p>
-                                On the specific entry's display page, press the "Encrypt" button. The entry should now be encrypted<br />
-                                <b>Note:</b> This button only appears on Decrypted entries, and is replaced with the "Decrypt" button on Encrypted entries.
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Decrypting Entries</h3>
-                            <p>
-                                On the specific entry's display page, press the "Decrypt" Button and enter the correct password.<br />
-                                If the password is incorrect, the page remains unchanged. If the password is correct, the encrypted section is decrypted<br />
-                                <b>Note:</b> This button only appears on Encrypted entries, and is replaced with the "Encrypt" button on decrypted entries.<br />
-                                <br />
-                                You can also change the salt you're using to decrypt the entry with by clicking "salt" and changing the line that appears below.
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Deleting Entries</h3>
-                            <p>
-                                <b>Deleting Individual Entries:</b><br />
-                                To delete a specific entry, starting from the <a href="#indexPage">List</a> screen, Click on the entry you want to delete.<br />
-                                In the Entry's display screen, press the "Delete" button at the bottom of the screen.<br />
-                                Press the "Delete" button in the resulting Popup dialog to confirm deletion.<br />
-                                <br />
-                                <b>Deleting All Entries:</b><br />
-                                On the <a href="#optionsPage">Options</a> page at the top right corner of the screen.<br />
-                                The last option in the options page is "Delete All Entries", press it and press "Delete" on the resulting popup.
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Save to File</h3>
-                            <p>
-                                On the <a href="#optionsPage">Options</a> page, press the "Save to File" button.
-                                This will save a file to "Feisty/feistypass.txt" on your device.<br />
-                                It is hoped that a file dialog that lets you navigate and choose where to save this file can be implemented some day.
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Load from File</h3>
-                            <p>
-                                On the <a href="#optionsPage">Options</a> page, press the "Load from File" button.
-                                This will load a file from "Feisty/feistypass.txt" on your device.<br />
-                                It is hoped that a file dialog that lets you navigate and choose what file to load can be implemented some day.<br />
-                                <u>Warning:</u> This will erase all existing entries and replace them with the ones from the file.
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Salt</h3>
-                            <p>
-                                In Cryptography, a salt is random data that is used with a one-way function<sup>*</sup> on a password.
-                                By using this random data with a one-way function,
-                                it helps protect passwords from common types of attack such as "dictionary attacks" and pre-computed "rainbow table" attacks.<br />
-                                <br />
-                                To change this app's salt,
-                                go to the <a href="#optionsPage">Options</a> page and edit the line of text with the "Salt" label to the top left of it.
-                                Changes are automatically saved and applied.<br />
-                                <br />
-                                <u>Warning:</u> changing the salt will make any entry created with the previous salt
-                                harder to decrypt, requiring you to enter the old salt along with the password.
-                                This can be fixed by "changing" the password while the new salt is set, even if you're setting the password to it's current value.
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Encrypt on Edit</h3>
-                            <p>
-                                This <a href="#optionsPage">Option</a> controls whether the entry is encrypted upon editing it and before displaying it again,
-                                or keeps decrypted entries decrypted once an edit is saved.<br />
-                                <br />
-                                If <b>Encrypt on Edit</b> is checked, then a decrypted entry will be encrypted when edits to it are saved.<br />
-                                If <b>Encrypt on Edit</b> is not checked, then a decrypted entry will remain decrypted when edits to it are saved.
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Encrypt on New</h3>
-                            <p>
-                                This <a href="#optionsPage">Option</a> controls whether the entry is encrypted upon creating it and before displaying it again,
-                                or keeps new entries decrypted once created.<br />
-                                <br />
-                                If <b>Encrypt on New</b> is checked, then a new entry will be encrypted when created and displayed for the first time.<br />
-                                If <b>Encrypt on New</b> is not checked, then a new entry will remain decrypted when created and displayed for the first time.
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>Generate Random Password</h3>
-                            <p>
-                                This <a href="#optionsPage">Option</a> effects entry creation.<br />
-                                <br />
-                                If <b>Generate Random Password</b> is checked,
-                                then the form for creating a new entry will contain a randomly generated password in the secret section.<br />
-                                If <b>Generate Random Password</b> is not checked, then the form for creating a new entry will be entirely blank.<br />
-                                <br />
-                                Randomly generated passwords consist of numbers, capital and lower case letters, and the following two symbols: -_<br />
-                                <br />
-                                It is hoped password generation for this app can be improved in the future, but I have no idea of how to proceed on that.
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>What is Cryptography</h3>
-                            <p>
-                                Cryptography is a collection of techniques for securely communicating with others despite the presence of observers.
-                                To Encrypt is to take a message and change it in such a way that it can no longer be read, but can still be decrypted.
-                                To Decrypt is to transform an encrypted message into a readable message.
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>What is a Bad Password</h3>
-                            <p>
-                                A bad password is one that is easy to guess or find out.
-                                Attackers try to guess passwords in a variety of ways, including trying common words and commonly used passwords.
-                                For these and other reasons, never use a password that is any of the following:
-                                <ul>
-                                    <li><b>123456</b>, <b>111111</b>, <b>123123</b>, or any predictable series of numbers.</li>
-                                    <li><b>password</b> - This one's especially bad, but any plane word is a problem.</li>
-                                    <li><b>password1</b> - Also common, also bad because of that.</li>
-                                    <li><b>qwerty</b></li>
-                                    <li><b>abc123</b></li>
-                                    <li><b>adobe123</b> - The name of the product you're using isn't going to protect you.</li>
-                                    <li><b>admin</b> - This is actually the default password for some devices.</li>
-                                    <li><b>letmein</b></li>
-                                </ul>
-                                Other things of note:
-                                <ul>
-                                    <li>Don't use the same word as your log-in, or any variation of it.</li>
-                                    <li>Don't use only letters or only numbers.</li>
-                                    <li>Don't use names of spouses, children, girlfriends/boyfriends or pets.</li>
-                                    <li>Don't use phone numbers, Social Security numbers or birthdates.</li>
-                                    <li>Don't use any word that can be found in the dictionary</li>
-                                </ul>
-                            </p>
-                        </li>
-                        <li data-role="collapsible">
-                            <h3>What is a Feistel Network?</h3>
-                            <p>
-                                A Feistel Network is a key element of many encryption schemes, including Feisty Pass's.
-                                The steps a Feistel Network performs are as follows:
-                                <ol>
-                                    <li>Break the text into a left block (L<sub>n</sub>) and a right block (R<sub>n</sub>).</li>
-                                    <li>Copy the right block into the new left block.<br />
-                                    L<sub>n+1</sub> = R<sub>n</sub></li>
-                                    <li>Run the old right block and a key through a one way function<sup>*</sup>.<br />
-                                    x = F(R<sub>n</sub>, K<sub>n</sub>)</li>
-                                    <li>Combine the previous result with the old left block to create the new right block.<br />
-                                    R<sub>n+1</sub> = L<sub>n</sub> &#8853; x</li>
-                                    <li>Repeat steps 1 through 4 for as many times as specified.</li>
-                                </ol>
-                                <sub>* A one way function is something that takes input, and will produce an output based on that input,
-                                but which there is no function that can change that output back into the input.</sub><br />
-                                This process can be used to encrypt and decrypt a block of text.<br />
-                                <img src="img/feistel_cipher.png" style="max-width: 410px;width: 100%;height: auto;" />
-                            </p>
-                        </li>
-                    </ul>
-                </div>
+                            <b>Getting Started</b>
+                            <ul>
+                                <li>
+                                    Change the salt. Do this before creating your entries.
+                                    The default salt is likely to grow less and less secure over time.
+                                </li>
+                                <li>
+                                    Create your entries. It is recommended that you use two or more passwords to encrypt all your entries,
+                                    one password for more important things, and another for less important things.
+                                </li>
+                                <li>
+                                    Don't forget to include information in the encrypted section that may be needed,
+                                    such as what email address was used or the username on an account.
+                                </li>
+                            </ul>
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Creating a New Entry</h3>
+                        <p>
+                            <ol>
+                                <li>
+                                    Press the "New" button at the bottom of the <a href="#indexPage">List</a> screen.<br />
+                                    This will display the form used to create new entries<br />
+                                    If the "New" button is not shown on the screen, taping the screen should make it appear.
+                                </li>
+                                <li>
+                                    Fill out the form that appears<br />
+                                    The only requirement for the form is that the two password fields match.
+                                </li>
+                                <li>
+                                    Press "Save".<br />
+                                    This should create a new entry and display it for you.
+                                </li>
+                            </ol>
+                            <u>Note:</u> Only the last field is encrypted, and is meant for storing sensitive information.
+                            The password fields are used to encrypt and decrypt the entry, they are not saved.
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Editing an Entry</h3>
+                        <p>
+                            You can edit an entry even if it is encrypted.
+                            But if it is encrypted, you can only see and edit the title and description.
+                            <ol>
+                                <li>
+                                    From the <a href="#indexPage">List</a> screen, Click on the entry you want to edit.
+                                    This will display the specific entry.
+                                </li>
+                                <li>
+                                    Optional: Decrypt the entry before editing it so that the password and encrypted content can be edited.
+                                    Press the "Decrypt" button on the bottom of the screen and enter the correct password for this entry into the popup.
+                                </li>
+                                <li>
+                                    From the Entry's Display screen, press the "Edit" button at the bottom of the screen.
+                                    This will bring you to the edit screen for the specific entry.
+                                </li>
+                                <li>
+                                    In the edit screen, change the entry to your liking, then press "Save".<br />
+                                    The only requirement for the form is that the two password fields match.
+                                    If you leave the password fields blank, the entry's password will not change.
+                                </li>
+                            </ol>
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Fiesty Markup</h3>
+                        <p>
+                            Entries support markup in their description and in the encrypted section.<br />
+                            <br />
+                            <b>Password Box:</b> This is a box meant to hold passwords, for a bit of added protection.<br />
+                            <table>
+                                <tr>
+                                    <th>Form Input</th>
+                                    <th>Entry Display</th>
+                                </tr>
+                                <tr>
+                                    <td><input id="pw_sample_in" type="text" value="[password]" READONLY/></td>
+                                    <td id="pw_sample_out"></td>
+                                </tr>
+                            </table>
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Sorting Entries</h3>
+                        <p>From the <a href="#indexPage">List</a> screen,
+                        make sure the "Sortable" checkbox at the end of the screen, then drag and drop the entries into place.<br />
+                        <br />
+                        If the checkbox is not shown on the screen, taping the screen should make it appear.</p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Encrypting Entries</h3>
+                        <p>
+                            On the specific entry's display page, press the "Encrypt" button. The entry should now be encrypted<br />
+                            <b>Note:</b> This button only appears on Decrypted entries, and is replaced with the "Decrypt" button on Encrypted entries.
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Decrypting Entries</h3>
+                        <p>
+                            On the specific entry's display page, press the "Decrypt" Button and enter the correct password.<br />
+                            If the password is incorrect, the page remains unchanged. If the password is correct, the encrypted section is decrypted<br />
+                            <b>Note:</b> This button only appears on Encrypted entries, and is replaced with the "Encrypt" button on decrypted entries.<br />
+                            <br />
+                            You can also change the salt you're using to decrypt the entry with by clicking "salt" and changing the line that appears below.
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Deleting Entries</h3>
+                        <p>
+                            <b>Deleting Individual Entries:</b><br />
+                            To delete a specific entry, starting from the <a href="#indexPage">List</a> screen, Click on the entry you want to delete.<br />
+                            In the Entry's display screen, press the "Delete" button at the bottom of the screen.<br />
+                            Press the "Delete" button in the resulting Popup dialog to confirm deletion.<br />
+                            <br />
+                            <b>Deleting All Entries:</b><br />
+                            Go to the <a href="#optionsPage">Options</a> page at the top right corner of the screen.<br />
+                            The last option in the options page is "Delete All Entries", press it and press "Delete" on the resulting popup.
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Save to File</h3>
+                        <p>
+                            On the <a href="#optionsPage">Options</a> page, press the "Save to File" button.
+                            This will save a file to "Feisty/feistypass.txt" on your device.<br />
+                            It is hoped that a file dialog that lets you navigate and choose where to save this file can be implemented some day.
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Load from File</h3>
+                        <p>
+                            On the <a href="#optionsPage">Options</a> page, press the "Load from File" button.
+                            This will load a file from "Feisty/feistypass.txt" on your device.<br />
+                            It is hoped that a file dialog that lets you navigate and choose what file to load can be implemented some day.<br />
+                            <u>Warning:</u> This will erase all existing entries and replace them with the ones from the file.
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Salt</h3>
+                        <p>
+                            In Cryptography, a salt is random data that is used with a one-way function<sup>*</sup> on a password.
+                            By using this random data with a one-way function,
+                            it helps protect passwords from common types of attack such as "dictionary attacks" and pre-computed "rainbow table" attacks.<br />
+                            <br />
+                            To change this app's salt,
+                            go to the <a href="#optionsPage">Options</a> page and edit the line of text with the "Salt" label to the top left of it.
+                            Changes are automatically saved and applied.<br />
+                            You can also use the "Generate Random Salt" button to generate a new random salt.<br />
+                            <br />
+                            <u>Warning:</u> changing the salt will make any entry created with the previous salt
+                            harder to decrypt, requiring you to enter the old salt along with the password.
+                            This can be fixed by "changing" the password while the new salt is set, even if you're setting the password to it's current value.
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Encrypt on Edit</h3>
+                        <p>
+                            This <a href="#optionsPage">Option</a> controls whether the entry is encrypted upon editing it and before displaying it again,
+                            or keeps decrypted entries decrypted once an edit is saved.<br />
+                            <br />
+                            If <b>Encrypt on Edit</b> is checked, then a decrypted entry will be encrypted when edits to it are saved.<br />
+                            If <b>Encrypt on Edit</b> is not checked, then a decrypted entry will remain decrypted when edits to it are saved.
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Encrypt on New</h3>
+                        <p>
+                            This <a href="#optionsPage">Option</a> controls whether the entry is encrypted upon creating it and before displaying it again,
+                            or keeps new entries decrypted once created.<br />
+                            <br />
+                            If <b>Encrypt on New</b> is checked, then a new entry will be encrypted when created and displayed for the first time.<br />
+                            If <b>Encrypt on New</b> is not checked, then a new entry will remain decrypted when created and displayed for the first time.
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>Generate Random Password</h3>
+                        <p>
+                            This <a href="#optionsPage">Option</a> effects entry creation.<br />
+                            <br />
+                            If <b>Generate Random Password</b> is checked,
+                            then the form for creating a new entry will contain a randomly generated password in the secret section.<br />
+                            If <b>Generate Random Password</b> is not checked, then the form for creating a new entry will be entirely blank.<br />
+                            <br />
+                            Randomly generated passwords consist of numbers, capital and lower case letters, and the following two symbols: -_<br />
+                            <br />
+                            It is hoped password generation for this app can be improved in the future, but I have no idea of how to proceed on that.
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>What is Cryptography</h3>
+                        <p>
+                            Cryptography is a collection of techniques for securely communicating with others despite the presence of observers.
+                            To Encrypt is to take a message and change it in such a way that it can no longer be read, but can still be decrypted.
+                            To Decrypt is to transform an encrypted message into a readable message.
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>What is a Bad Password</h3>
+                        <p>
+                            A bad password is one that is easy to guess or find out.
+                            Attackers try to guess passwords in a variety of ways, including trying common words and commonly used passwords.
+                            For these and other reasons, never use a password that is any of the following:
+                            <ul>
+                                <li><b>123456</b>, <b>111111</b>, <b>123123</b>, or any predictable series of numbers.</li>
+                                <li><b>password</b> - This one's especially bad, but any plane word is a problem.</li>
+                                <li><b>password1</b> - Also common, also bad because of that.</li>
+                                <li><b>qwerty</b></li>
+                                <li><b>abc123</b></li>
+                                <li><b>adobe123</b> - The name of the product you're using isn't going to protect you.</li>
+                                <li><b>admin</b> - This is actually the default password for some devices.</li>
+                                <li><b>letmein</b></li>
+                            </ul>
+                            Other things of note:
+                            <ul>
+                                <li>Don't use the same word as your log-in, or any variation of it.</li>
+                                <li>Don't use only letters or only numbers.</li>
+                                <li>Don't use names of spouses, children, girlfriends/boyfriends or pets.</li>
+                                <li>Don't use phone numbers, Social Security numbers or birthdates.</li>
+                                <li>Don't use any word that can be found in the dictionary</li>
+                            </ul>
+                        </p>
+                    </li>
+                    <li data-role="collapsible">
+                        <h3>What is a Feistel Network?</h3>
+                        <p>
+                            A Feistel Network is a key element of many encryption schemes, including Feisty Pass's.
+                            The steps a Feistel Network performs are as follows:
+                            <ol>
+                                <li>Break the text into a left block (L<sub>n</sub>) and a right block (R<sub>n</sub>).</li>
+                                <li>Copy the right block into the new left block.<br />
+                                L<sub>n+1</sub> = R<sub>n</sub></li>
+                                <li>Run the old right block and a key through a one way function<sup>*</sup>.<br />
+                                x = F(R<sub>n</sub>, K<sub>n</sub>)</li>
+                                <li>Combine the previous result with the old left block to create the new right block.<br />
+                                R<sub>n+1</sub> = L<sub>n</sub> &#8853; x</li>
+                                <li>Repeat steps 1 through 4 for as many times as specified.</li>
+                            </ol>
+                            <sub>* A one way function is something that takes input, and will produce an output based on that input,
+                            but which there is no function that can change that output back into the input.</sub><br />
+                            This process can be used to encrypt and decrypt a block of text.<br />
+                            <img src="img/feistel_cipher.png" style="max-width: 410px;width: 100%;height: auto;" />
+                        </p>
+                    </li>
+                </ul>
             </div>
         </div>
     </body>

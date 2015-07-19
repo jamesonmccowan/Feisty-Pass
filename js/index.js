@@ -487,7 +487,7 @@ function passwordShowHide() {
 
 function passwordShowHideSample() {
     $('#pw_sample_out')
-        .html(parse($('#pw_sampe_in').val()));
+        .html(parse($('#pw_sample_in').val()));
     $("#pw_sample_out .password_showhide_button").click(passwordShowHide);
 }
 
@@ -610,6 +610,12 @@ function loadFromFile () {
     entryManager.fromFile();
 }
 
+function randomSalt() {
+    $("#salt").val(entryManager.random());
+    entryManager.config.salt = $("#salt").val();
+    entryManager.save();
+}
+
 function deleteAll() {
     entryManager["index"] = 0,
     entryManager["entries"] = [];
@@ -688,13 +694,14 @@ $(document).on("pageinit", "#indexPage", function () {
 
     passwordShowHideSample();
     if (entryManager.entries.length == 0) {
+        randomSalt();
         entryManager.new(
             "Welcome To Feisty Pass!",
             "This is an introductory entry to help explain some of the apps workings.\n\n"+
             "Before you do anything more, it is recommended that you change the salt. "+
             "you can do this by pressing the \"Options\" button at the top right. "+
             "For more information, see the help page.\n\n"+
-            "This entry's salt is [thinkOfABetterSalt] and it's password is [password]",
+            "This entry's salt is [" + entryManager.config.salt + "] and it's password is [password]",
             {content:"You've successfully decrypted this introduction!"},
             "password");
     }
@@ -711,4 +718,4 @@ $(document).on('pagebeforeshow', '#entryPage', function(){
             $('#depass').focus();
         }
     });
-});   
+});
