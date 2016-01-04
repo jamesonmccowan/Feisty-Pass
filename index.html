@@ -215,10 +215,6 @@
                             <b>Getting Started</b>
                             <ul>
                                 <li>
-                                    Change the salt. Do this before creating your entries.
-                                    The default salt is likely to grow less and less secure over time.
-                                </li>
-                                <li>
                                     Create your entries. It is recommended that you use two or more passwords to encrypt all your entries,
                                     one password for more important things, and another for less important things.
                                 </li>
@@ -235,11 +231,11 @@
                             <ol>
                                 <li>
                                     Press the "New" button at the bottom of the <a href="#indexPage">List</a> screen.<br />
-                                    This will display the form used to create new entries<br />
+                                    This will display the form used to create new entries.<br />
                                     If the "New" button is not shown on the screen, taping the screen should make it appear.
                                 </li>
                                 <li>
-                                    Fill out the form that appears<br />
+                                    Fill out the form that appears.<br />
                                     The only requirement for the form is that the two password fields match.
                                 </li>
                                 <li>
@@ -363,7 +359,10 @@
                             <br />
                             <u>Warning:</u> changing the salt will make any entry created with the previous salt
                             harder to decrypt, requiring you to enter the old salt along with the password.
-                            This can be fixed by "changing" the password while the new salt is set, even if you're setting the password to it's current value.
+                            This can be fixed by "changing" the password while the new salt is set, even if you're setting the password to it's current value.<br />
+                            <br />
+                            <sub>* A one way function is something that takes input, and will produce an output based on that input,
+                            but which there is no function that can change that output back into the input.</sub>
                         </p>
                     </li>
                     <li data-role="collapsible">
@@ -416,7 +415,7 @@
                             For these and other reasons, never use a password that is any of the following:
                             <ul>
                                 <li><b>123456</b>, <b>111111</b>, <b>123123</b>, or any predictable series of numbers.</li>
-                                <li><b>password</b> - This one's especially bad, but any plane word is a problem.</li>
+                                <li><b>password</b> - This one's especially bad, but any plain word is a problem.</li>
                                 <li><b>password1</b> - Also common, also bad because of that.</li>
                                 <li><b>qwerty</b></li>
                                 <li><b>abc123</b></li>
@@ -459,7 +458,7 @@
                         <h3>Software Credits and Licenses</h3>
                         <p>
                             This app was Created by Ouroboros Productions of OuroborosProductions.org<br />
-                            and licensed under the MIT license.<br />
+                            and licensed under the <a href="#license">MIT license</a>.<br />
                             <br />
                             Software used as part of this app includes the following:
                             <dl>
@@ -488,11 +487,26 @@
                                     Copyright 2009-2013 by Jeff Mott. All rights reserved.<br />
                                     https://code.google.com/p/crypto-js/wiki/License (modified MIT License)
                                 </dd>
+                                <dt>Apache Cordova</dt>
+                                <dd>
+                                    Copyright 2012, 2013, 2015 The Apache Software Foundation
+                                    Apache License, (v2.0)
+                                </dd>
                             </dl>
                         </p>
                     </li>
                 </ul>
             </div>
+        </div>
+
+        <div id="license" data-role="page">
+<p>Copyright (c) 2015 OuroborosProductions.org</p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
         </div>
     </body>
 </html>

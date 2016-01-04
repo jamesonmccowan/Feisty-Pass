@@ -698,9 +698,6 @@ $(document).on("pageinit", "#indexPage", function () {
         entryManager.new(
             "Welcome To Feisty Pass!",
             "This is an introductory entry to help explain some of the apps workings.\n\n"+
-            "Before you do anything more, it is recommended that you change the salt. "+
-            "you can do this by pressing the \"Options\" button at the top right. "+
-            "For more information, see the help page.\n\n"+
             "This entry's salt is [" + entryManager.config.salt + "] and it's password is [password]",
             {content:"You've successfully decrypted this introduction!"},
             "password");
